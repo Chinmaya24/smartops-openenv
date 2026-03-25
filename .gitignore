@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual env
+venv/
+.env
+
+# Logs
+logs/
+*.log
+
+# Models
+*.zip
+*.pth
+
+# OS
+.DS_Store
+Thumbs.db
