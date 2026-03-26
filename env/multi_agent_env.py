@@ -1,8 +1,7 @@
-import random
-from env.models import Observation, Action, Reward
-from env.tasks import TASKS
+from env.models import Observation, Action
 from env.graders import multi_agent_grade
-from env.agents import triage_agent, response_agent, escalation_agent
+from env.tasks import TASKS
+import random
 
 
 class SmartOpsEnv:
@@ -10,76 +9,95 @@ class SmartOpsEnv:
     def __init__(self):
         self.task = None
         self.email = None
-        self.memory = None
+        self.shared_memory = None
         self.current_agent = None
         self.step_count = 0
 
-    def reset(self, task_id=None):
-        self.task = random.choice(TASKS) if task_id is None else TASKS[task_id]
-        self.email = self.task["initial_state"]
+    # =========================
+    # 🔄 RESET
+    # =========================
+    def reset(self, custom_email=None):
 
-        self.memory = {
-            "category": None,
-            "urgency": None,
-            "response": None,
-            "escalated": False,
-            "priority": None
-        }
+        self.task = random.choice(TASKS)
 
-        self.current_agent = "triage"
+        # ✅ Initialize state properly
         self.step_count = 0
+        self.shared_memory = {}
+        self.current_agent = "triage"
+
+        # ✅ Use custom input if provided
+        if custom_email:
+            self.email = custom_email
+        else:
+            self.email = self.task["initial_state"]
 
         return self._obs()
 
-    def state(self):
-        return {
-            "email": self.email,
-            "memory": self.memory
-        }
-
+    # =========================
+    # ▶️ STEP
+    # =========================
     def step(self, action: Action):
+
         self.step_count += 1
 
         # ❌ Wrong agent turn
         if action.agent != self.current_agent:
-            return self._obs(), Reward(score=-0.2, feedback="Wrong agent turn"), False, {}
+            return self._obs(), -0.2, False, {"error": "Wrong agent turn"}
 
-        # 🤖 Agent logic
+        # =========================
+        # 🤖 AGENT LOGIC
+        # =========================
         if action.agent == "triage":
+            from env.agents import triage_agent
             result = triage_agent(self.email)
-            self.memory.update(result)
-            self.current_agent = "manager"
+            self.shared_memory.update(result)
+            self.current_agent = "response"
 
         elif action.agent == "response":
-            self.memory["response"] = response_agent(self.memory)
-            self.current_agent = "manager"
+            from env.agents import response_agent
+            result = response_agent(self.shared_memory)
+            self.shared_memory["response"] = result
+            self.current_agent = "escalation"
 
         elif action.agent == "escalation":
-            result = escalation_agent(self.memory)
-            self.memory.update(result)
-            self.current_agent = "manager"
+                from env.agents import escalation_agent
+                result = escalation_agent(self.shared_memory)
+                self.shared_memory.update(result)   # ✅ VERY IMPORTANT
+                self.current_agent = "manager"
 
         elif action.agent == "manager":
-            if self.memory["category"] is None:
-                self.current_agent = "triage"
-            elif self.memory["urgency"] >= 5:
-                self.current_agent = "escalation"
-            elif self.memory["response"] is None:
-                self.current_agent = "response"
-            else:
-                self.current_agent = "done"
+            # Final step
+            pass
 
-        # 🏆 Reward
+        # =========================
+        # 🎯 GRADING
+        # =========================
         score, feedback, done = multi_agent_grade(
-            self.task, self.memory, self.step_count
+            self.task,
+            self.shared_memory,
+            self.step_count
         )
 
-        return self._obs(), Reward(score=score, feedback=feedback), done, {}
+        return self._obs(), score, done, {"feedback": feedback}
 
+    # =========================
+    # 👁 OBSERVATION
+    # =========================
     def _obs(self):
         return Observation(
             email=self.email,
             current_agent=self.current_agent,
-            shared_memory=self.memory,
+            shared_memory=self.shared_memory,
             step_count=self.step_count
         )
+
+    # =========================
+    # 📦 STATE (Optional)
+    # =========================
+    def state(self):
+        return {
+            "email": self.email,
+            "memory": self.shared_memory,
+            "agent": self.current_agent,
+            "step": self.step_count
+        }

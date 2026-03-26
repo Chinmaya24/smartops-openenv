@@ -1,42 +1,51 @@
 TASKS = [
-    # 🟢 EASY TASK
-    {
-        "id": "easy_spam",
-        "initial_state": {
-            "subject": "Win FREE iPhone",
-            "body": "Click to claim reward",
-            "customer_tier": "free"
-        },
-        "expected": {
-            "category": "spam"
-        }
-    },
 
-    # 🟡 MEDIUM TASK
+    # 🟢 EASY
     {
-        "id": "medium_refund",
+        "name": "refund_request",
         "initial_state": {
             "subject": "Refund needed",
             "body": "I was charged twice",
-            "customer_tier": "premium"
+            "customer_tier": "user"
         },
         "expected": {
             "category": "billing",
-            "response_contains": "refund"
+            "response_contains": "refund",
+            "escalated": False,
+            "priority": 2
         }
     },
 
-    # 🔴 HARD TASK
+    # 🟡 MEDIUM
     {
-        "id": "hard_enterprise",
+        "name": "login_issue",
         "initial_state": {
-            "subject": "System DOWN",
-            "body": "We are losing money",
-            "customer_tier": "enterprise"
+            "subject": "Cannot login",
+            "body": "I am unable to access my account",
+            "customer_tier": "user"
         },
         "expected": {
+            "category": "technical",
+            "response_contains": "help",
+            "escalated": False,
+            "priority": 3
+        }
+    },
+
+    # 🔴 HARD (YOUR CASE)
+    {
+        "name": "system_outage",
+        "initial_state": {
+            "subject": "System down urgently",
+            "body": "Our production system is down and we are losing money",
+            "customer_tier": "premium"
+        },
+        "expected": {
+            "category": "technical",
+            "response_contains": "fix",   # ✅ matches "fixing"
             "escalated": True,
             "priority": 5
         }
     }
+
 ]

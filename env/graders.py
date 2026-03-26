@@ -5,49 +5,80 @@ def multi_agent_grade(task, memory, step_count):
     feedback = ""
     done = False
 
-    # 🎯 Category correctness
-    if "category" in expected:
-        if memory.get("category") == expected["category"]:
-            score += 0.4
-        else:
-            feedback += "Wrong category. "
+    # ✅ SAFE NORMALIZATION
+    category = str(memory.get("category", "")).lower()
+    expected_category = str(expected.get("category", "")).lower()
 
-    # 💬 Response quality
-    if "response_contains" in expected:
-        if memory.get("response") and expected["response_contains"] in memory["response"].lower():
-            score += 0.3
-        else:
-            feedback += "Poor response. "
+    response = str(memory.get("response", "")).lower()
 
+    escalated = bool(memory.get("escalated"))
+    expected_escalated = bool(expected.get("escalated"))
+
+    priority = int(memory.get("priority", 0))
+    expected_priority = int(expected.get("priority", 0))
+
+    # =========================
+    # 🎯 Category
+    # =========================
+    if category == expected_category:
+        score += 0.4
+    else:
+        score -= 0.05
+        feedback += "Wrong category. "
+
+    # =========================
+    # 💬 Response
+    # =========================
+    keywords = ["fix", "fixing", "resolve", "working", "investigating"]
+
+    if response and any(word in response for word in keywords):
+        score += 0.3
+    else:
+        score -= 0.05
+        feedback += "Weak response. "
+
+    # =========================
     # 🚨 Escalation
-    if "escalated" in expected:
-        if memory.get("escalated") == expected["escalated"]:
-            score += 0.2
+    # =========================
+    if escalated == expected_escalated:
+        score += 0.2
+    else:
+        score -= 0.05
 
+    # =========================
     # ⚡ Priority
-    if "priority" in expected:
-        if memory.get("priority") == expected["priority"]:
-            score += 0.1
+    # =========================
+    if priority == expected_priority:
+        score += 0.1
 
-    # 🔄 Intermediate rewards
-    if memory.get("category"):
-        score += 0.05
-
-    if memory.get("response"):
-        score += 0.05
-
-    if memory.get("escalated"):
-        score += 0.05
-
-    # ⏱ Step penalty
+    # =========================
+    # ⚠️ Step penalties
+    # =========================
     if step_count > 4:
         score -= 0.1
+    if step_count > 6:
+        score -= 0.2
 
-    # Clamp score
+    # =========================
+    # 🏆 BONUS
+    # =========================
+    if (
+        category == expected_category
+        and any(word in response for word in keywords)
+        and escalated == expected_escalated
+        and priority == expected_priority
+    ):
+        score += 0.2
+
+    # =========================
+    # 🔒 Clamp
+    # =========================
     score = max(0.0, min(score, 1.0))
 
-    # ✅ Done condition
-    if score >= 0.8:
+    # =========================
+    # ✅ Done
+    # =========================
+    if score >= 0.7:
         done = True
         feedback += "Task success."
 
