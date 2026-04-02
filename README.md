@@ -7,7 +7,22 @@ sdk: docker
 pinned: false
 license: mit
 ---
+```
+
+So it looks like this at the top:
+```
+---
+title: SmartOps OpenEnv
+emoji: 🤖
+colorFrom: blue
+colorTo: purple
+sdk: docker
+pinned: false
+license: mit
+---
+
 # SmartOps OpenEnv
+.
 
 SmartOps OpenEnv is a production-ready multi-agent customer support environment with:
 
