@@ -5,19 +5,8 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "smartops-openenv"
 version = "0.1.0"
-description = "SmartOps OpenEnv environment for AI email automation"
-authors = [
-    { name = "Chinmaya", email = "chinmaikn@gmail.com" }
-]
-readme = "README.md"
 requires-python = ">=3.10"
-
-dependencies = [
-    "fastapi",
-    "uvicorn",
-    "requests",
-    "openai"
-]
 
 [tool.setuptools.packages.find]
 where = ["."]
+include = ["smartops*"]

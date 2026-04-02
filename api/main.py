@@ -1,1 +1,1 @@
-from main import app
+from smartops.main import app
