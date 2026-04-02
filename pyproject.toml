@@ -1,0 +1,11 @@
+[project]
+name = "smartops-openenv"
+version = "0.1.0"
+description = "SmartOps OpenEnv environment for email automation"
+authors = [
+    { name="Chinmaya", email="chinmaikn@gmail.com" }
+]
+requires-python = ">=3.10"
+
+[tool.setuptools]
+packages = ["tasks"]
