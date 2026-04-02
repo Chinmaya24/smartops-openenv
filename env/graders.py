@@ -1,85 +1,75 @@
-def multi_agent_grade(task, memory, step_count):
-    expected = task["expected"]
+"""Reward grader: category, response keywords, escalation, priority, inefficiency penalty."""
 
-    score = 0.0
-    feedback = ""
-    done = False
+from __future__ import annotations
 
-    # ✅ SAFE NORMALIZATION
+from typing import Any, Dict
+
+from env.models import Reward
+
+
+def grade(task: Dict[str, Any], memory: Dict[str, Any], step_count: int) -> Reward:
+    """
+    Weighted score:
+    - category match: 0.4
+    - response keyword match: 0.3
+    - escalation correctness: 0.2
+    - priority correctness: 0.1
+    - inefficiency penalty: min(0.2, max(0, step_count - 4) * 0.05) subtracted from sum
+    """
+    rules = task.get("evaluation_rules") or task.get("expected_outputs") or {}
+    if not rules:
+        return Reward(score=0.0, feedback="missing_evaluation_rules", breakdown={})
+
     category = str(memory.get("category", "")).lower()
-    expected_category = str(expected.get("category", "")).lower()
-
+    expected_category = str(rules.get("category", "")).lower()
     response = str(memory.get("response", "")).lower()
+    keywords = list(rules.get("response_keywords", []))
 
     escalated = bool(memory.get("escalated"))
-    expected_escalated = bool(expected.get("escalated"))
+    expected_escalated = bool(rules.get("escalated"))
 
-    priority = int(memory.get("priority", 0))
-    expected_priority = int(expected.get("priority", 0))
+    try:
+        priority = int(memory.get("priority", 0))
+    except (TypeError, ValueError):
+        priority = 0
+    try:
+        expected_priority = int(rules.get("priority", 0))
+    except (TypeError, ValueError):
+        expected_priority = 0
 
-    # =========================
-    # 🎯 Category
-    # =========================
-    if category == expected_category:
-        score += 0.4
-    else:
-        score -= 0.05
-        feedback += "Wrong category. "
+    breakdown: Dict[str, float] = {}
 
-    # =========================
-    # 💬 Response
-    # =========================
-    keywords = ["fix", "fixing", "resolve", "working", "investigating"]
+    cat = 0.4 if category == expected_category else 0.0
+    breakdown["category"] = cat
 
-    if response and any(word in response for word in keywords):
-        score += 0.3
-    else:
-        score -= 0.05
-        feedback += "Weak response. "
+    kw_ok = bool(response) and any(kw.lower() in response for kw in keywords)
+    resp = 0.3 if kw_ok else 0.0
+    breakdown["response_keywords"] = resp
 
-    # =========================
-    # 🚨 Escalation
-    # =========================
-    if escalated == expected_escalated:
-        score += 0.2
-    else:
-        score -= 0.05
+    esc = 0.2 if escalated == expected_escalated else 0.0
+    breakdown["escalation"] = esc
 
-    # =========================
-    # ⚡ Priority
-    # =========================
-    if priority == expected_priority:
-        score += 0.1
+    pri = 0.1 if priority == expected_priority else 0.0
+    breakdown["priority"] = pri
 
-    # =========================
-    # ⚠️ Step penalties
-    # =========================
-    if step_count > 4:
-        score -= 0.1
-    if step_count > 6:
-        score -= 0.2
+    raw = cat + resp + esc + pri
+    extra = max(0, step_count - 4)
+    penalty = min(0.2, extra * 0.05)
+    breakdown["inefficiency_penalty"] = -penalty
 
-    # =========================
-    # 🏆 BONUS
-    # =========================
-    if (
-        category == expected_category
-        and any(word in response for word in keywords)
-        and escalated == expected_escalated
-        and priority == expected_priority
-    ):
-        score += 0.2
+    score = max(0.0, min(1.0, raw - penalty))
 
-    # =========================
-    # 🔒 Clamp
-    # =========================
-    score = max(0.0, min(score, 1.0))
+    parts = []
+    if cat == 0.0:
+        parts.append("category_mismatch")
+    if resp == 0.0:
+        parts.append("response_keywords_mismatch")
+    if esc == 0.0:
+        parts.append("escalation_mismatch")
+    if pri == 0.0:
+        parts.append("priority_mismatch")
+    if penalty > 0:
+        parts.append("inefficiency")
 
-    # =========================
-    # ✅ Done
-    # =========================
-    if score >= 0.7:
-        done = True
-        feedback += "Task success."
-
-    return score, feedback, done
+    feedback = "; ".join(parts) if parts else "ok"
+    return Reward(score=score, feedback=feedback, breakdown=breakdown)

@@ -2,7 +2,7 @@ import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 
-from env.multi_agent_env import SmartOpsEnv
+from env.smart_ops_env import SmartOpsEnv
 from env.models import Action
 
 
@@ -12,17 +12,16 @@ class SmartOpsGymEnv(gym.Env):
         super().__init__()
         self.env = SmartOpsEnv()
 
-        # Observation: 6 features
-        self.observation_space = spaces.Box(
-            low=0, high=10, shape=(6,), dtype=np.float32
-        )
+        self.observation_space = spaces.Box(low=0, high=10, shape=(6,), dtype=np.float32)
 
-        # Actions: 4 agents
         self.action_space = spaces.Discrete(4)
-        # 0=triage, 1=response, 2=escalation, 3=manager
 
     def reset(self, seed=None, options=None):
-        obs = self.env.reset()
+        super().reset(seed=seed)
+        if seed is not None:
+            obs = self.env.reset(seed=seed)
+        else:
+            obs = self.env.reset()
         return self._encode_obs(obs), {}
 
     def step(self, action):
@@ -34,16 +33,16 @@ class SmartOpsGymEnv(gym.Env):
 
         obs, reward, done, _ = self.env.step(act)
 
-        return self._encode_obs(obs), reward.score, done, False, {}
+        return self._encode_obs(obs), float(reward.score), done, False, {}
 
     def _encode_obs(self, obs):
-        memory = obs.shared_memory
+        memory = obs.shared_memory or {}
 
         return np.array([
             obs.step_count,
-            1 if memory["category"] else 0,
+            1 if memory.get("category") else 0,
             memory.get("urgency", 0) or 0,
-            1 if memory["response"] else 0,
-            1 if memory["escalated"] else 0,
+            1 if memory.get("response") else 0,
+            1 if memory.get("escalated") else 0,
             memory.get("priority", 0) or 0
         ], dtype=np.float32)

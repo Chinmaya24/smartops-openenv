@@ -1,0 +1,4 @@
+# Optional: PPO training (install after requirements.txt)
+-r requirements.txt
+stable-baselines3>=2.0
+torch

@@ -1,0 +1,70 @@
+name: smartops-openenv
+version: "3.0"
+description: >
+  Multi-agent customer-support OpenEnv with triage, response, escalation, and manager finalize.
+  Deterministic agents (no external LLM API required) for production and Hugging Face CPU.
+
+entry_point: env.smart_ops_env:SmartOpsEnv
+
+metadata:
+  author: SmartOps
+  license: MIT
+  tags:
+    - customer-support
+    - multi-agent
+    - reinforcement-learning
+
+observation_space:
+  type: object
+  fields:
+    email:
+      type: object
+      description: Incoming email (subject, body, customer_tier).
+    current_agent:
+      type: string
+      enum: [triage, response, escalation, manager]
+    shared_memory:
+      type: object
+      description: Cross-agent state (category, urgency, response, escalated, priority, score).
+    step_count:
+      type: integer
+      minimum: 0
+    task_name:
+      type: string
+      nullable: true
+      description: Active benchmark task id when using task registry.
+
+action_space:
+  type: object
+  fields:
+    agent:
+      type: string
+      enum: [triage, response, escalation, manager]
+    action_type:
+      type: string
+      enum: [route, respond, escalate, finalize, auto]
+
+reward:
+  type: object
+  fields:
+    score:
+      type: number
+      minimum: 0.0
+      maximum: 1.0
+    feedback:
+      type: string
+    breakdown:
+      type: object
+      description: Per-component weights (category, response_keywords, escalation, priority, inefficiency_penalty).
+
+tasks:
+  - id: refund_request
+    difficulty: easy
+  - id: login_issue
+    difficulty: medium
+  - id: system_outage
+    difficulty: hard
+
+api:
+  endpoint: POST /process-email
+  note: Stable JSON contract for n8n (Gmail trigger → HTTP Request → Gmail send).
