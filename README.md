@@ -1,122 +1,142 @@
 # SmartOps OpenEnv
 
-Production-style **OpenEnv** customer-support environment: triage → response → escalation → manager, with **deterministic agents** (no LLM API required), **graded rewards**, and a **stable FastAPI** contract for real automation.
+SmartOps OpenEnv is a production-ready multi-agent customer support environment with:
 
-## Real-world system (n8n + Gmail)
+- Stable FastAPI contract for n8n automation
+- Deterministic agent behavior (no external API required)
+- OpenEnv-compatible environment core (`reset`, `step`, `state`)
+- Weighted reward grading + RL-ready wrapper
 
-In production, email flows through automation without manual dashboards:
+## Architecture
 
 ```mermaid
 flowchart LR
   Gmail[Gmail Trigger] --> n8n[n8n Workflow]
   n8n --> HTTP[POST /process-email]
-  HTTP --> Agents[SmartOpsEnv + Agents]
-  Agents --> JSON[JSON response]
-  JSON --> Send[Gmail Send / next step]
+  HTTP --> Env[SmartOpsEnv]
+  Env --> Agents[Triage -> Response -> Escalation -> Manager]
+  Agents --> JSON[Structured response]
+  JSON --> GmailSend[Gmail Send]
 ```
 
-- **Gmail** receives customer mail; **n8n** runs on new message.
-- **HTTP Request** node calls this service with `subject`, `body`, `customer_tier`.
-- The app runs **`SmartOpsEnv`** with a fixed agent sequence and returns **the same JSON shape as before** so existing workflows keep working.
+## API Contract (n8n-safe)
 
-If you previously started the API with `uvicorn api:app`, the project now uses a package layout. Use:
+This contract is intentionally kept stable.
 
-```bash
-python -m uvicorn main:app --host 0.0.0.0 --port 8000
-```
+### Endpoint
 
-On Windows, `uvicorn` is often not on `PATH` even after `pip install`; **`python -m uvicorn`** always uses the same environment as `python`. Equivalent: `python -m uvicorn api.main:app`.
+`POST /process-email`
 
-**Browser:** `0.0.0.0` is only for binding the server; it is not a valid URL. Open **`http://127.0.0.1:8000/`** or **`http://localhost:8000/`** on the same machine (health check: `GET /`).
-
-## OpenEnv specification
-
-| Piece | Location |
-|--------|-----------|
-| Environment | `env/smart_ops_env.py` — `reset`, `step`, `state` |
-| Models | `env/models.py` — `Observation`, `Action`, `Reward` |
-| Grader | `env/graders.py` — `grade(task, memory, step_count) -> Reward` |
-| Tasks | `tasks/definitions.py` — email input, expected outputs, evaluation rules |
-| Agents | `agents/` — `triage_agent`, `response_agent`, `escalation_agent` |
-| Gym wrapper | `env/gym_wrapper.py` — RL integration |
-| Config | `openenv.yaml` |
-
-### Reward weights
-
-- Category match: **0.4**
-- Response keyword match: **0.3**
-- Escalation correctness: **0.2**
-- Priority correctness: **0.1**
-- Inefficiency penalty: up to **0.2** (steps beyond four)
-
-Final score is clamped to **[0, 1]**.
-
-### API (unchanged contract)
-
-**`POST /process-email`**
-
-Request:
+### Request
 
 ```json
 {
-  "subject": "...",
-  "body": "...",
+  "subject": "Refund needed",
+  "body": "I was charged twice for my order.",
   "customer_tier": "user"
 }
 ```
 
-Response:
+### Response
 
 ```json
 {
-  "category": "...",
-  "urgency": 1,
-  "response": "...",
+  "category": "billing",
+  "urgency": 2,
+  "response": "We are processing your refund and will confirm once the adjustment is complete.",
   "escalated": false,
   "priority": 2,
-  "score": 0.95
+  "score": 1.0
 }
 ```
 
-- **`score`** is the graded reward after the manager step (against a **deterministic task** inferred from email content for benchmarking).
+## OpenEnv Specification
 
-## Project layout
+- **Environment**: `env/smart_ops_env.py`
+  - `reset(task: dict | None, custom_email: dict | None, seed: int | None) -> Observation`
+  - `step(action: Action) -> (Observation, Reward, done, info)`
+  - `state() -> Observation`
+- **Models**: `env/models.py` (`Observation`, `Action`, `Reward`)
+- **Grader**: `env/graders.py` (`grade(task, memory, step_count) -> Reward`)
+- **Tasks**: `tasks/definitions.py`
+- **OpenEnv config**: `openenv.yaml`
 
+### Reward Weights
+
+- category match: `0.4`
+- response keyword match: `0.3`
+- escalation correctness: `0.2`
+- priority correctness: `0.1`
+- inefficiency penalty for extra steps
+
+## Built-in Tasks
+
+- `refund_request` (easy)
+- `login_issue` (medium)
+- `system_outage` (hard)
+
+Each task defines:
+- email input
+- expected outputs
+- evaluation rules
+
+## Project Structure
+
+```text
+agents/
+  triage.py
+  response.py
+  escalation.py
+api/
+  main.py
+env/
+  smart_ops_env.py
+  models.py
+  graders.py
+  gym_wrapper.py
+tasks/
+  definitions.py
+scripts/
+  run_baseline.py
+  run_multiagent.py
+  train_rl.py
+  eval_rl.py
+main.py
+app.py
+openenv.yaml
 ```
-env/           # SmartOpsEnv, models, graders, gym wrapper
-agents/        # triage, response, escalation
-api/           # FastAPI application
-tasks/         # Task registry + deterministic task resolution
-scripts/       # baseline, training, eval
-main.py        # Uvicorn entry: `app`
-app.py         # Streamlit dashboard (optional)
-```
 
-## Local setup
+## Quick Start
+
+### 1) Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Run FastAPI (n8n target)
+### 2) Run FastAPI
 
 ```bash
-python -m uvicorn main:app --reload --port 8000
+python -m uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
-### Run Streamlit UI
+Windows note: use `python -m uvicorn` (not plain `uvicorn`) if `uvicorn` is not in PATH.
+
+Browser note: open `http://127.0.0.1:8000/` or `http://localhost:8000/` (not `0.0.0.0`).
+
+### 3) Optional UI (Streamlit)
 
 ```bash
 streamlit run app.py
 ```
 
-### Baseline (all tasks, fixed policy)
+### 4) Run baseline benchmark
 
 ```bash
 python scripts/run_baseline.py
 ```
 
-### RL training (optional)
+## RL (Optional)
 
 ```bash
 pip install -r requirements-rl.txt
@@ -133,19 +153,10 @@ docker run -p 8000:8000 smartops-openenv
 
 ## Hugging Face Spaces
 
-- Use this repo with **Docker** or a **custom start command**: `python -m uvicorn main:app --host 0.0.0.0 --port 7860` (Spaces often maps **7860**; adjust the Space settings if needed).
-- **`requirements.txt`** is CPU-friendly (no PyTorch unless you add RL extras).
-
-## Tasks
-
-| Task | Difficulty | Role |
-|------|------------|------|
-| `refund_request` | easy | Billing / refund wording |
-| `login_issue` | medium | Access / login issues |
-| `system_outage` | hard | Outage / urgent production impact |
-
-Each task includes `email_input`, `expected_outputs`, and `evaluation_rules` in `tasks/definitions.py`.
+- Works with Docker Spaces using this repo.
+- Suggested start command (non-Docker): `python -m uvicorn main:app --host 0.0.0.0 --port 7860`
+- `requirements.txt` is CPU-friendly.
 
 ## License
 
-MIT (adjust as needed).
+MIT
