@@ -1,10 +1,47 @@
 name: smartops-openenv
 version: 0.1.0
-api_base: ${API_BASE_URL}
+
+api:
+  base_url: ${API_BASE_URL}
+
+environment:
+  observation_space:
+    type: object
+    properties:
+      observation:
+        type: string
+      reward:
+        type: number
+      done:
+        type: boolean
+
+  action_space:
+    type: object
+    properties:
+      action:
+        type: string
+
 tasks:
   - name: email_classification
-    path: tasks/email_classification.py
+    description: Classify email into categories like support, billing, incident
+    input:
+      email: string
+    output:
+      category: string
+    metric: accuracy
+
   - name: urgency_detection
-    path: tasks/urgency_detection.py
+    description: Detect urgency level of email
+    input:
+      email: string
+    output:
+      urgency: string
+    metric: accuracy
+
   - name: action_recommendation
-    path: tasks/action_recommendation.py
+    description: Recommend next action based on email
+    input:
+      email: string
+    output:
+      action: string
+    metric: accuracy
