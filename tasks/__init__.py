@@ -13,21 +13,41 @@ from tasks.urgency_detection import TASK_NAME as URGENCY_DETECTION_TASK
 TASKS = [
     {
         "name": EMAIL_CLASSIFICATION_TASK,
+        "difficulty": "easy",
         "email_input": EMAIL_CLASSIFICATION_INPUT,
         "expected_output": EMAIL_CLASSIFICATION_EXPECTED_OUTPUT,
+        "evaluation_rules": {
+            "category": "billing",
+            "response_keywords": ["refund", "processing", "adjustment", "confirm"],
+            "escalated": False,
+            "priority": 2,
+        },
     },
     {
         "name": URGENCY_DETECTION_TASK,
+        "difficulty": "medium",
         "email_input": URGENCY_DETECTION_INPUT,
         "expected_output": URGENCY_DETECTION_EXPECTED_OUTPUT,
+        "evaluation_rules": {
+            "category": "technical",
+            "response_keywords": ["aware", "fixing", "urgently", "issue"],
+            "escalated": True,
+            "priority": 5,
+        },
     },
     {
         "name": ACTION_RECOMMENDATION_TASK,
+        "difficulty": "hard",
         "email_input": ACTION_RECOMMENDATION_INPUT,
         "expected_output": ACTION_RECOMMENDATION_EXPECTED_OUTPUT,
+        "evaluation_rules": {
+            "category": "technical",
+            "response_keywords": ["help", "resolve", "support", "assist"],
+            "escalated": False,
+            "priority": 3,
+        },
     },
 ]
-
 
 def resolve_task_for_email(email: dict) -> dict:
     text = f"{email.get('subject', '')} {email.get('body', '')}".lower()
