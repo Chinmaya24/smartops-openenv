@@ -1,3 +1,12 @@
+---
+title: SmartOps OpenEnv
+emoji: ??
+colorFrom: blue
+colorTo: purple
+sdk: docker
+pinned: false
+license: mit
+---
 $meta = "---`ntitle: SmartOps OpenEnv`nemoji: 🤖`ncolorFrom: blue`ncolorTo: purple`nsdk: docker`npinned: false`nlicense: mit`n---`n"
 $content = Get-Content README.md -Raw
 $meta + $content | Set-Content README.md
@@ -252,3 +261,4 @@ SmartOps OpenEnv goes beyond a simulation by combining:
 * real-world automation
 
 It showcases how intelligent agents can operate in production-like workflows and make meaningful decisions autonomously.
+
