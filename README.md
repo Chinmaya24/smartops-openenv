@@ -8,258 +8,261 @@ pinned: false
 license: mit
 ---
 
-$meta = "---`ntitle: SmartOps OpenEnv`nemoji: 🤖`ncolorFrom: blue`ncolorTo: purple`nsdk: docker`npinned: false`nlicense: mit`n---`n"
-$content = Get-Content README.md -Raw
-$meta + $content | Set-Content README.md
-(Get-Content README.md) | Out-File README_backup.md
-"---
-title: SmartOps OpenEnv
-emoji: 🤖
-colorFrom: blue
-colorTo: purple
-sdk: docker
-pinned: false
-license: mit
----
-" + (Get-Content README.md -Raw) | Set-Content README.md
-# SmartOps OpenEnv 🚀
+<div align="center">
 
-## 🔍 Overview
+# 🚀 SmartOps OpenEnv
 
-SmartOps OpenEnv is a real-world AI-powered operations environment that simulates how organizations automatically process incoming emails, detect urgency, and recommend actions.
+### AI Multi-Agent Customer Support Environment
 
-It follows the OpenEnv standard (`step() / reset() / state()`) and integrates with workflow automation using n8n to demonstrate end-to-end intelligent operations.
+[![OpenEnv](https://img.shields.io/badge/OpenEnv-Compliant-blue?style=for-the-badge)](https://github.com/meta-pytorch/OpenEnv)
+[![HuggingFace](https://img.shields.io/badge/🤗%20Hugging%20Face-Spaces-yellow?style=for-the-badge)](https://huggingface.co/spaces/chinu248/smartops-openenv-final)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com)
+[![Python](https://img.shields.io/badge/Python-3.10-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+
+**A production-ready reinforcement learning environment for AI-powered email operations**
+
+[🌐 Live Demo](https://chinu248-smartops-openenv-final.hf.space) • [📖 API Docs](https://chinu248-smartops-openenv-final.hf.space/docs) • [💻 GitHub](https://github.com/Chinmaya24/smartops-openenv)
+
+</div>
 
 ---
 
-## 🎯 Problem Solved
+## 🎯 Overview
 
-Organizations receive large volumes of emails such as:
+SmartOps OpenEnv is a **real-world AI operations environment** that simulates how organizations automatically process incoming emails using a **multi-agent architecture** with reinforcement learning.
 
-* Support requests
-* Urgent incident alerts
-* Billing issues
-* General inquiries
-
-Manually processing these is slow and error-prone.
-
-👉 SmartOps automates this entire pipeline:
-
-* Understand email content
-* Detect urgency
-* Recommend next actions
-* Trigger automated workflows
+Built for the **Meta × Hugging Face OpenEnv Hackathon**, it demonstrates:
+- 🤖 Multi-agent collaboration (Triage → Response → Escalation)
+- 🎯 Reward-based evaluation with partial progress signals
+- ⚙️ Full OpenEnv spec compliance (`reset()` / `step()` / `state()`)
+- 🔄 End-to-end automation with Gmail + n8n integration
 
 ---
 
-## ⚙️ System Architecture
+## 🏗️ System Architecture
 
-### Core Components
-
-1. **OpenEnv FastAPI Environment**
-
-   * Implements:
-
-     * `POST /reset`
-     * `POST /step`
-     * `GET /state`
-     * `POST /process-email`
-   * Deployed on Hugging Face Spaces
-
-2. **AI Task Engine**
-
-   * Email Classification
-   * Urgency Detection
-   * Action Recommendation
-
-3. **Grader System**
-
-   * Evaluates outputs with scores between `0.0 – 1.0`
-
-4. **n8n Automation Layer**
-
-   * Connects real-world inputs (Gmail)
-   * Triggers AI processing
-   * Automates responses/actions
-
----
-
-## 🔄 End-to-End Workflow (n8n Integration)
-
-Using n8n, SmartOps becomes a real automation system:
-
-### Flow:
-
-Gmail API / Trigger
-↓
-Extract email + sender
-↓
-HTTP Request (to OpenEnv API)
-↓
-AI Processing (`/process-email`)
-↓
-Receive:
-
-* category
-* urgency
-* recommended_action
-  ↓
-  Automated Action:
-* Send reply
-* Trigger alert
-* Create task
-
----
-
-## 📧 Example Workflow
-
-### Input Email:
-
-"URGENT: Server is down, fix immediately"
-
-### Output:
-
-```json
-{
-  "category": "incident",
-  "urgency": "high",
-  "recommended_action": "escalate_to_engineering"
-}
+```
+📧 Incoming Email
+       │
+       ▼
+┌─────────────────┐
+│  Gmail Trigger  │  ← n8n Automation
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  HTTP Request   │  ← POST /process-email
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────────────────────────────┐
+│           SmartOps OpenEnv              │
+│                                         │
+│  🧠 Triage Agent → classifies + urgency │
+│         ↓                               │
+│  💬 Response Agent → generates reply    │
+│         ↓                               │
+│  🚨 Escalation Agent → priority flag   │
+│         ↓                               │
+│  📊 Reward Grader → scores 0.0–1.0     │
+└─────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────┐
+│   Gmail Send    │  ← AI-powered reply
+└─────────────────┘
 ```
 
-### Automated Action (via n8n):
+---
 
-* Send Slack alert 🚨
-* Notify engineering team
-* Create incident ticket
+## 🤖 Agents
+
+| Agent | Role | Output |
+|-------|------|--------|
+| 🧠 **Triage Agent** | Classifies email + assigns urgency | `category`, `urgency` |
+| 💬 **Response Agent** | Generates professional reply | `response` |
+| 🚨 **Escalation Agent** | Decides escalation + priority | `escalated`, `priority` |
 
 ---
 
-## 🧪 OpenEnv API
+## 📊 Tasks & Benchmark Scores
 
-### `POST /reset`
-
-Resets environment state
-
-### `POST /step`
-
-```json
-{
-  "action": "process_email"
-}
-```
-
-Returns:
-
-```json
-{
-  "observation": "...",
-  "reward": 0.8,
-  "done": false
-}
-```
-
-### `GET /state`
-
-Returns current environment state
-
-### `POST /process-email`
-
-Processes raw email input
-
----
-
-## 📊 Tasks Implemented
-
-1. **Email Classification (Easy)**
-2. **Urgency Detection (Medium)**
-3. **Action Recommendation (Hard)**
-
-Each task:
-
-* Has input/output examples
-* Includes grader functions
-* Returns scores in `[0.0, 1.0]`
+| Task | Difficulty | Score |
+|------|-----------|-------|
+| 📧 Email Classification | 🟢 Easy | **1.0000** |
+| ⚡ Urgency Detection | 🟡 Medium | **1.0000** |
+| 🎯 Action Recommendation | 🔴 Hard | **1.0000** |
+| | **Average** | **1.0000** ✅ |
 
 ---
 
 ## 🎯 Reward Function
 
-* Based on correctness of predictions
-* Partial rewards for partially correct outputs
-* Normalized between `0.0 – 1.0`
+```
+score = category_match (0.4)
+      + response_keywords (0.3)
+      + escalation_correctness (0.2)
+      + priority_correctness (0.1)
+      - inefficiency_penalty (step_count > 4)
+```
+
+Scores normalized to `[0.0, 1.0]` with partial progress signals at each step.
 
 ---
 
-## 🤖 Inference Pipeline
+## 🌐 API Reference
 
-The `inference.py` script:
+### `POST /reset`
+Resets environment for new episode.
+```json
+{"observation": "ready", "reward": 0.0, "done": false}
+```
 
-* Calls deployed API
-* Runs all tasks
-* Produces structured logs:
+### `POST /step`
+Execute agent action.
+```json
+{"action": "triage"}
+```
+Returns: `{"observation": "...", "reward": 0.3, "done": false}`
 
+### `GET /state`
+Current environment state.
+
+### `POST /process-email`
+End-to-end email processing.
+```json
+{
+  "subject": "URGENT: Website is down",
+  "body": "We are losing money every minute!",
+  "customer_tier": "premium"
+}
+```
+Returns:
+```json
+{
+  "category": "technical",
+  "urgency": 5,
+  "response": "We are aware of the issue and fixing it urgently.",
+  "escalated": true,
+  "priority": 5,
+  "score": 1.0
+}
+```
+
+---
+
+## 🔄 n8n Automation Integration
+
+SmartOps connects to real-world Gmail via n8n:
+
+```
+Customer Email → Gmail Trigger → HTTP Request → AI Processing → Gmail Reply
+```
+
+✅ Fully automated — zero human interaction required.
+
+---
+
+## 🧪 Inference Pipeline
+
+```bash
+python inference.py
+```
+
+Output:
 ```
 [START]
 [STEP] task=email_classification score=1.0
-[STEP] task=urgency_detection score=1.0
+[STEP] task=urgency_detection    score=1.0
 [STEP] task=action_recommendation score=1.0
 [END]
 ```
 
 ---
 
-## 🚀 Deployment
+## 🚀 Quick Start
 
-* Hosted on Hugging Face Spaces
-* Dockerized FastAPI app
-* Compatible with:
+### Run locally
+```bash
+pip install -r requirements.txt
+python -m uvicorn server.app:app --host 0.0.0.0 --port 7860
+```
 
-  * 2 CPU
-  * 8GB RAM
-
----
-
-## 🔐 Environment Variables
-
-* `API_BASE_URL` – API endpoint
-* `MODEL_NAME` – model used for inference
-* `HF_TOKEN` – API key
-
----
-
-## 🐳 Setup Instructions
-
+### Run with Docker
 ```bash
 docker build -t smartops-openenv .
 docker run -p 7860:7860 smartops-openenv
 ```
 
----
-
-## 🔗 Live Deployment
-
-👉 https://chinu248-smartops-openenv-final.hf.space
-
----
-
-## 🧠 Key Highlights
-
-* Real-world AI operations system
-* Fully OpenEnv compliant
-* End-to-end automation using n8n
-* Scalable and extensible architecture
-* Demonstrates AI + workflow integration
+### Run baseline benchmark
+```bash
+python scripts/run_baseline.py
+```
 
 ---
 
-## 🏁 Conclusion
+## 📁 Project Structure
 
-SmartOps OpenEnv goes beyond a simulation by combining:
+```
+smartops-openenv/
+├── server/
+│   └── app.py          ← FastAPI OpenEnv server
+├── agents/
+│   ├── triage.py       ← Classification + urgency
+│   ├── response.py     ← Reply generation
+│   └── escalation.py   ← Priority decisions
+├── tasks/
+│   ├── email_classification.py
+│   ├── urgency_detection.py
+│   └── action_recommendation.py
+├── env/
+│   ├── smart_ops_env.py ← OpenEnv core
+│   ├── models.py        ← Typed models
+│   └── graders.py       ← Reward system
+├── scripts/
+│   └── run_baseline.py  ← Benchmark runner
+├── inference.py         ← Inference script
+├── openenv.yaml         ← OpenEnv manifest
+└── Dockerfile           ← HF Spaces deployment
+```
 
-* AI decision-making
-* structured environments
-* real-world automation
+---
 
-It showcases how intelligent agents can operate in production-like workflows and make meaningful decisions autonomously.
+## ⚙️ Tech Stack
 
+| Component | Technology |
+|-----------|-----------|
+| Backend | FastAPI + Uvicorn |
+| Environment | OpenEnv Core |
+| RL | Stable-Baselines3 (PPO) |
+| Automation | n8n + Gmail API |
+| Deployment | Hugging Face Spaces |
+| Container | Docker |
+
+---
+
+## 🏆 Why SmartOps Stands Out
+
+- ✅ **Real-world use case** — not a toy or game
+- ✅ **Full OpenEnv compliance** — spec_version 1
+- ✅ **Perfect benchmark scores** — 1.0 on all tasks
+- ✅ **Production deployment** — live on HF Spaces
+- ✅ **End-to-end automation** — Gmail → AI → Reply
+- ✅ **Multi-agent architecture** — 3 specialized agents
+- ✅ **RL-ready** — PPO training with reward shaping
+
+---
+
+## 👨‍💻 Author
+
+Built with ❤️ for the **Meta × Hugging Face OpenEnv Hackathon**
+
+[![GitHub](https://img.shields.io/badge/GitHub-Chinmaya24-181717?style=for-the-badge&logo=github)](https://github.com/Chinmaya24)
+
+---
+
+<div align="center">
+⭐ Star this repo if you found it useful!
+</div>
