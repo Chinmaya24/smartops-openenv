@@ -1,3 +1,6 @@
+$meta = "---`ntitle: SmartOps OpenEnv`nemoji: 🤖`ncolorFrom: blue`ncolorTo: purple`nsdk: docker`npinned: false`nlicense: mit`n---`n"
+$content = Get-Content README.md -Raw
+$meta + $content | Set-Content README.md
 (Get-Content README.md) | Out-File README_backup.md
 "---
 title: SmartOps OpenEnv
