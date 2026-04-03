@@ -1,3 +1,14 @@
+(Get-Content README.md) | Out-File README_backup.md
+"---
+title: SmartOps OpenEnv
+emoji: 🤖
+colorFrom: blue
+colorTo: purple
+sdk: docker
+pinned: false
+license: mit
+---
+" + (Get-Content README.md -Raw) | Set-Content README.md
 # SmartOps OpenEnv 🚀
 
 ## 🔍 Overview
