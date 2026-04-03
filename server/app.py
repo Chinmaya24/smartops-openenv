@@ -146,3 +146,13 @@ def state() -> Dict[str, Any]:
 @app.post("/process-email")
 def process_email(payload: EmailRequest) -> Dict[str, Any]:
     return runtime.process_email(payload)
+
+
+def main() -> None:
+    import uvicorn
+
+    uvicorn.run("server.app:app", host="0.0.0.0", port=7860)
+
+
+if __name__ == "__main__":
+    main()
