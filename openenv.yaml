@@ -1,47 +1,64 @@
 name: smartops-openenv
 version: 0.1.0
-
 api:
-  base_url: ${API_BASE_URL}
-
-environment:
-  observation_space:
-    type: object
-    properties:
-      observation:
-        type: string
-      reward:
-        type: number
-      done:
-        type: boolean
-
-  action_space:
-    type: object
-    properties:
-      action:
-        type: string
-
+  base_url: http://0.0.0.0:7860
 tasks:
   - name: email_classification
-    description: Classify email into categories like support, billing, incident
+    description: Classify email into categories like billing, technical, general
+    difficulty: easy
     input:
-      email: string
+      subject: string
+      body: string
+      customer_tier: string
     output:
       category: string
     metric: accuracy
+    score_range: [0.0, 1.0]
 
   - name: urgency_detection
-    description: Detect urgency level of email
+    description: Detect urgency level of email (1-5)
+    difficulty: medium
     input:
-      email: string
+      subject: string
+      body: string
+      customer_tier: string
     output:
-      urgency: string
+      urgency: integer
     metric: accuracy
+    score_range: [0.0, 1.0]
 
   - name: action_recommendation
-    description: Recommend next action based on email
+    description: Recommend escalation and priority based on email
+    difficulty: hard
     input:
-      email: string
+      subject: string
+      body: string
+      customer_tier: string
     output:
-      action: string
+      escalated: boolean
+      priority: integer
+      response: string
     metric: accuracy
+    score_range: [0.0, 1.0]
+
+endpoints:
+  reset: /reset
+  step: /step
+  state: /state
+  process_email: /process-email
+
+observation_space:
+  type: object
+  properties:
+    observation:
+      type: string
+    reward:
+      type: number
+    done:
+      type: boolean
+
+action_space:
+  type: object
+  properties:
+    action:
+      type: string
