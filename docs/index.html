@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartOps OpenEnv — Documentation</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #6366f1;
+    --accent2: #a855f7;
+    --accent3: #22d3ee;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --green: #10b981;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse 80% 50% at 20% 20%, rgba(99,102,241,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(168,85,247,0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 260px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 2rem 1.5rem;
+    overflow-y: auto;
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+  }
+
+  .logo-text {
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .logo-sub {
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .nav-section {
+    margin-bottom: 1.5rem;
+  }
+
+  .nav-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+    padding: 0 0.5rem;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+
+  .nav-link:hover, .nav-link.active {
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  .nav-link.active {
+    color: var(--accent);
+    border-left: 2px solid var(--accent);
+  }
+
+  /* Main content */
+  .main {
+    margin-left: 260px;
+    padding: 3rem 4rem;
+    max-width: 1100px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Hero */
+  .hero {
+    margin-bottom: 4rem;
+    padding-bottom: 3rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 100px;
+    font-size: 0.7rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    border: 1px solid;
+  }
+
+  .badge-blue { color: var(--accent); border-color: rgba(99,102,241,0.3); background: rgba(99,102,241,0.1); }
+  .badge-purple { color: var(--accent2); border-color: rgba(168,85,247,0.3); background: rgba(168,85,247,0.1); }
+  .badge-cyan { color: var(--accent3); border-color: rgba(34,211,238,0.3); background: rgba(34,211,238,0.1); }
+  .badge-green { color: var(--green); border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.1); }
+
+  h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.6) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1rem;
+  }
+
+  .hero-desc {
+    font-size: 1.1rem;
+    color: var(--muted);
+    max-width: 600px;
+    margin-bottom: 2rem;
+  }
+
+  .score-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .score-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    text-align: center;
+  }
+
+  .score-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--green);
+  }
+
+  .score-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 0.25rem;
+  }
+
+  /* Sections */
+  .section {
+    margin-bottom: 4rem;
+    display: none;
+  }
+
+  .section.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h2 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    margin-top: 1.5rem;
+    color: var(--accent);
+  }
+
+  p {
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  /* Code blocks */
+  pre {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    overflow-x: auto;
+    margin-bottom: 1.5rem;
+    position: relative;
+  }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--accent3);
+    line-height: 1.7;
+  }
+
+  pre code { color: var(--text); }
+
+  .inline-code {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.1rem 0.4rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--accent3);
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+    font-size: 0.875rem;
+  }
+
+  th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    font-weight: 700;
+    color: var(--text);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  td {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* Cards */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: border-color 0.2s;
+  }
+
+  .card:hover { border-color: var(--accent); }
+
+  .card-icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
+  .card-title { font-weight: 700; margin-bottom: 0.5rem; font-size: 0.95rem; }
+  .card-desc { font-size: 0.82rem; color: var(--muted); }
+
+  /* Flow diagram */
+  .flow {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .flow-step {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+
+  .flow-arrow {
+    text-align: center;
+    color: var(--accent);
+    font-size: 1.2rem;
+    margin: 0.25rem 0;
+    padding-left: 2rem;
+  }
+
+  .flow-icon { font-size: 1.25rem; width: 32px; text-align: center; }
+  .flow-content { flex: 1; }
+  .flow-name { font-weight: 700; font-size: 0.9rem; }
+  .flow-detail { font-size: 0.78rem; color: var(--muted); }
+  .flow-output {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--green);
+    background: rgba(16,185,129,0.1);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+  }
+
+  /* Reward bars */
+  .reward-bars { margin-bottom: 1.5rem; }
+
+  .reward-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .reward-label {
+    width: 180px;
+    font-size: 0.82rem;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .bar-track {
+    flex: 1;
+    height: 8px;
+    background: var(--surface2);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 100px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  .reward-weight {
+    width: 40px;
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* Q&A */
+  .qa-item {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+  }
+
+  .qa-q {
+    padding: 1rem 1.25rem;
+    background: var(--surface2);
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+  }
+
+  .qa-q:hover { background: var(--border); }
+
+  .qa-a {
+    padding: 1rem 1.25rem;
+    font-size: 0.875rem;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    display: none;
+    line-height: 1.7;
+  }
+
+  .qa-item.open .qa-a { display: block; }
+  .qa-item.open .qa-arrow { transform: rotate(180deg); }
+  .qa-arrow { transition: transform 0.2s; }
+
+  /* Checklist */
+  .checklist { list-style: none; }
+  .checklist li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    font-size: 0.875rem;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .check { color: var(--green); font-size: 1rem; }
+
+  /* Links section */
+  .link-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .link-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    text-decoration: none;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.2s;
+  }
+
+  .link-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .link-icon { font-size: 1.5rem; }
+  .link-title { font-weight: 700; font-size: 0.9rem; }
+  .link-url { font-size: 0.75rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding: 1.5rem; }
+    .score-cards { grid-template-columns: repeat(2, 1fr); }
+    .card-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">🚀</div>
+    <div>
+      <div class="logo-text">SmartOps</div>
+      <div class="logo-sub">OpenEnv Docs</div>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Getting Started</div>
+    <a class="nav-link active" onclick="showSection('overview')">🏠 Overview</a>
+    <a class="nav-link" onclick="showSection('architecture')">🏗️ Architecture</a>
+    <a class="nav-link" onclick="showSection('agents')">🤖 Agents</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Core Concepts</div>
+    <a class="nav-link" onclick="showSection('tasks')">📊 Tasks & Scores</a>
+    <a class="nav-link" onclick="showSection('reward')">🎯 Reward Function</a>
+    <a class="nav-link" onclick="showSection('api')">🌐 API Reference</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Deployment</div>
+    <a class="nav-link" onclick="showSection('automation')">🔄 n8n Automation</a>
+    <a class="nav-link" onclick="showSection('deployment')">🐳 Deployment</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Career</div>
+    <a class="nav-link" onclick="showSection('resume')">📄 Resume Notes</a>
+    <a class="nav-link" onclick="showSection('interview')">💬 Interview Prep</a>
+    <a class="nav-link" onclick="showSection('links')">🔗 Links</a>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<main class="main">
+
+  <!-- OVERVIEW -->
+  <div id="overview" class="section active">
+    <div class="hero">
+      <div class="badge-row">
+        <span class="badge badge-blue">OpenEnv Compliant</span>
+        <span class="badge badge-purple">Meta Hackathon</span>
+        <span class="badge badge-cyan">FastAPI</span>
+        <span class="badge badge-green">All Checks ✅</span>
+      </div>
+      <h1>SmartOps OpenEnv</h1>
+      <p class="hero-desc">A production-ready AI multi-agent customer support environment built for the Meta × Hugging Face OpenEnv Hackathon. Fully automated, deployed, and scoring 1.0 on all benchmark tasks.</p>
+
+      <div class="score-cards">
+        <div class="score-card">
+          <div class="score-value">1.0</div>
+          <div class="score-label">Average Score</div>
+        </div>
+        <div class="score-card">
+          <div class="score-value">3</div>
+          <div class="score-label">AI Agents</div>
+        </div>
+        <div class="score-card">
+          <div class="score-value">4/4</div>
+          <div class="score-label">Checks Passed</div>
+        </div>
+        <div class="score-card">
+          <div class="score-value">5</div>
+          <div class="score-label">API Endpoints</div>
+        </div>
+      </div>
+    </div>
+
+    <h2>🎯 What is SmartOps?</h2>
+    <p>SmartOps OpenEnv simulates how organizations automatically process incoming customer emails using a <strong>multi-agent AI system</strong> with reinforcement learning.</p>
+
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-icon">🤖</div>
+        <div class="card-title">Multi-Agent AI</div>
+        <div class="card-desc">3 specialized agents collaborate to triage, respond, and escalate customer emails</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🎯</div>
+        <div class="card-title">RL Environment</div>
+        <div class="card-desc">Full OpenEnv spec with reset/step/state API and reward-based evaluation</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔄</div>
+        <div class="card-title">Real Automation</div>
+        <div class="card-desc">Connected to Gmail via n8n for fully automated end-to-end email processing</div>
+      </div>
+    </div>
+
+    <h2>⚙️ Tech Stack</h2>
+    <table>
+      <tr><th>Component</th><th>Technology</th><th>Purpose</th></tr>
+      <tr><td>Backend</td><td>FastAPI + Uvicorn</td><td>OpenEnv API server</td></tr>
+      <tr><td>Environment</td><td>OpenEnv Core</td><td>RL environment spec</td></tr>
+      <tr><td>RL Algorithm</td><td>PPO (Stable-Baselines3)</td><td>Agent training</td></tr>
+      <tr><td>Automation</td><td>n8n + Gmail API</td><td>Email workflow</td></tr>
+      <tr><td>Deployment</td><td>Hugging Face Spaces</td><td>24/7 hosting</td></tr>
+      <tr><td>Container</td><td>Docker</td><td>Reproducible deployment</td></tr>
+      <tr><td>Validation</td><td>Pydantic v2</td><td>Type-safe models</td></tr>
+    </table>
+  </div>
+
+  <!-- ARCHITECTURE -->
+  <div id="architecture" class="section">
+    <h2>🏗️ System Architecture</h2>
+    <p>SmartOps is built in 3 layers — AI Brain, RL Environment, and Automation.</p>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-icon">📧</div>
+        <div class="flow-content">
+          <div class="flow-name">Customer Email</div>
+          <div class="flow-detail">Incoming email to chinmaikn@gmail.com</div>
+        </div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="flow-icon">⚡</div>
+        <div class="flow-content">
+          <div class="flow-name">Gmail Trigger (n8n)</div>
+          <div class="flow-detail">Polls every minute for new emails</div>
+        </div>
+        <div class="flow-output">polls every 1 min</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="flow-icon">🌐</div>
+        <div class="flow-content">
+          <div class="flow-name">HTTP Request → HF Spaces</div>
+          <div class="flow-detail">POST /process-email with subject, body, customer_tier</div>
+        </div>
+        <div class="flow-output">POST /process-email</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="flow-icon">🧠</div>
+        <div class="flow-content">
+          <div class="flow-name">Triage Agent</div>
+          <div class="flow-detail">Classifies email + assigns urgency score</div>
+        </div>
+        <div class="flow-output">category + urgency</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="flow-icon">💬</div>
+        <div class="flow-content">
+          <div class="flow-name">Response Agent</div>
+          <div class="flow-detail">Generates professional reply based on category</div>
+        </div>
+        <div class="flow-output">response text</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="flow-icon">🚨</div>
+        <div class="flow-content">
+          <div class="flow-name">Escalation Agent</div>
+          <div class="flow-detail">Decides escalation flag and priority level</div>
+        </div>
+        <div class="flow-output">escalated + priority</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="flow-icon">📤</div>
+        <div class="flow-content">
+          <div class="flow-name">Gmail Send</div>
+          <div class="flow-detail">AI-generated reply sent back to customer</div>
+        </div>
+        <div class="flow-output">✅ delivered</div>
+      </div>
+    </div>
+
+    <h2>📁 Project Structure</h2>
+    <pre><code>smartops-openenv/
+│
+├── server/
+│   └── app.py          ← FastAPI OpenEnv server (all endpoints)
+│
+├── agents/
+│   ├── triage.py       ← Classifies email + urgency
+│   ├── response.py     ← Generates AI reply
+│   └── escalation.py   ← Decides priority + escalation
+│
+├── tasks/
+│   ├── email_classification.py   ← Task 1 (Easy)
+│   ├── urgency_detection.py      ← Task 2 (Medium)
+│   ├── action_recommendation.py  ← Task 3 (Hard)
+│   ├── graders.py                ← Per-task scoring
+│   └── __init__.py               ← Task definitions + evaluation_rules
+│
+├── env/
+│   ├── smart_ops_env.py  ← OpenEnv core (reset/step/state)
+│   ├── models.py         ← Action/Observation/Reward models
+│   └── graders.py        ← Weighted reward calculation
+│
+├── scripts/
+│   └── run_baseline.py   ← Benchmark runner
+│
+├── inference.py          ← Hackathon inference script
+├── openenv.yaml          ← OpenEnv manifest (spec_version: 1)
+├── Dockerfile            ← HF Spaces container (port 7860)
+└── requirements.txt      ← Dependencies</code></pre>
+  </div>
+
+  <!-- AGENTS -->
+  <div id="agents" class="section">
+    <h2>🤖 AI Agents</h2>
+    <p>Three specialized agents collaborate via shared memory to process each email.</p>
+
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-icon">🧠</div>
+        <div class="card-title">Triage Agent</div>
+        <div class="card-desc">Reads email → classifies category + assigns urgency 1–5 using keyword matching</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">💬</div>
+        <div class="card-title">Response Agent</div>
+        <div class="card-desc">Reads shared memory → generates professional reply based on category + urgency</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🚨</div>
+        <div class="card-title">Escalation Agent</div>
+        <div class="card-desc">Reads urgency → decides escalation flag and priority level 1–5</div>
+      </div>
+    </div>
+
+    <h3>Agent Decision Logic</h3>
+    <pre><code># Triage Agent — keyword-based classification
+if "outage" or "system down" or "production":
+    → category: technical, urgency: 5
+
+if "refund" or "charged" or "billing":
+    → category: billing, urgency: 2
+
+if "login" or "password" or "access":
+    → category: technical, urgency: 3
+
+default:
+    → category: general, urgency: 1
+
+# Response Agent — template-based replies
+if billing:
+    → "We are processing your refund..."
+
+if technical + urgency >= 4:
+    → "We are aware of the issue and fixing it urgently."
+
+if technical:
+    → "We will help you resolve this issue."
+
+default:
+    → "Thank you for contacting support..."
+
+# Escalation Agent — urgency-based rules
+if urgency >= 4: → escalated: True,  priority: 5
+if urgency >= 3: → escalated: False, priority: 3
+default:         → escalated: False, priority: 2</code></pre>
+
+    <h3>Shared Memory Flow</h3>
+    <pre><code>shared_memory = {}
+
+# After Triage:
+shared_memory = {"category": "billing", "urgency": 2}
+
+# After Response:
+shared_memory = {"category": "billing", "urgency": 2,
+                 "response": "We are processing your refund..."}
+
+# After Escalation:
+shared_memory = {"category": "billing", "urgency": 2,
+                 "response": "We are processing your refund...",
+                 "escalated": False, "priority": 2}</code></pre>
+  </div>
+
+  <!-- TASKS -->
+  <div id="tasks" class="section">
+    <h2>📊 Tasks & Benchmark Scores</h2>
+
+    <table>
+      <tr>
+        <th>Task</th>
+        <th>Difficulty</th>
+        <th>Input</th>
+        <th>Expected Output</th>
+        <th>Score</th>
+      </tr>
+      <tr>
+        <td>Email Classification</td>
+        <td>🟢 Easy</td>
+        <td>"Charged twice for subscription"</td>
+        <td>category: billing</td>
+        <td style="color: var(--green); font-weight: 700; font-family: monospace;">1.0000</td>
+      </tr>
+      <tr>
+        <td>Urgency Detection</td>
+        <td>🟡 Medium</td>
+        <td>"URGENT: System outage in production"</td>
+        <td>urgency: 5, escalated: true</td>
+        <td style="color: var(--green); font-weight: 700; font-family: monospace;">1.0000</td>
+      </tr>
+      <tr>
+        <td>Action Recommendation</td>
+        <td>🔴 Hard</td>
+        <td>"Cannot login after password reset"</td>
+        <td>escalated: false, priority ≤ 3</td>
+        <td style="color: var(--green); font-weight: 700; font-family: monospace;">1.0000</td>
+      </tr>
+      <tr>
+        <td colspan="4" style="font-weight: 700; text-align: right;">Average Score</td>
+        <td style="color: var(--green); font-weight: 800; font-family: monospace; font-size: 1.1rem;">1.0000 ✅</td>
+      </tr>
+    </table>
+
+    <h3>Run Baseline</h3>
+    <pre><code>python scripts/run_baseline.py
+
+# Output:
+task=email_classification  difficulty=easy    score=1.0000
+task=urgency_detection     difficulty=medium  score=1.0000
+task=action_recommendation difficulty=hard    score=1.0000
+
+average_score=1.0000</code></pre>
+  </div>
+
+  <!-- REWARD -->
+  <div id="reward" class="section">
+    <h2>🎯 Reward Function</h2>
+    <p>The reward function evaluates agent performance across 4 weighted components.</p>
+
+    <h3>Reward Weights</h3>
+    <div class="reward-bars">
+      <div class="reward-bar">
+        <div class="reward-label">Category Match</div>
+        <div class="bar-track"><div class="bar-fill" style="width: 40%"></div></div>
+        <div class="reward-weight">0.4</div>
+      </div>
+      <div class="reward-bar">
+        <div class="reward-label">Response Keywords</div>
+        <div class="bar-track"><div class="bar-fill" style="width: 30%"></div></div>
+        <div class="reward-weight">0.3</div>
+      </div>
+      <div class="reward-bar">
+        <div class="reward-label">Escalation Correct</div>
+        <div class="bar-track"><div class="bar-fill" style="width: 20%"></div></div>
+        <div class="reward-weight">0.2</div>
+      </div>
+      <div class="reward-bar">
+        <div class="reward-label">Priority Correct</div>
+        <div class="bar-track"><div class="bar-fill" style="width: 10%"></div></div>
+        <div class="reward-weight">0.1</div>
+      </div>
+    </div>
+
+    <h3>Formula</h3>
+    <pre><code>score = category_match      × 0.4
+      + response_keywords   × 0.3
+      + escalation_correct  × 0.2
+      + priority_correct    × 0.1
+      - inefficiency_penalty        # if step_count > 4
+
+# Clipped to [0.0, 1.0]
+# Partial progress signals at each step</code></pre>
+
+    <h3>Why These Weights?</h3>
+    <table>
+      <tr><th>Factor</th><th>Weight</th><th>Reason</th></tr>
+      <tr><td>Category</td><td>0.4</td><td>Wrong category = wrong department = customer frustration</td></tr>
+      <tr><td>Response</td><td>0.3</td><td>Reply quality directly impacts customer satisfaction</td></tr>
+      <tr><td>Escalation</td><td>0.2</td><td>Wrong escalation wastes senior team resources</td></tr>
+      <tr><td>Priority</td><td>0.1</td><td>Fine-tuning — less critical than the others</td></tr>
+    </table>
+  </div>
+
+  <!-- API -->
+  <div id="api" class="section">
+    <h2>🌐 API Reference</h2>
+
+    <h3>POST /reset</h3>
+    <p>Resets environment state for a new episode.</p>
+    <pre><code>curl -X POST https://chinu248-smartops-openenv-final.hf.space/reset
+
+# Response:
+{
+  "observation": "ready",
+  "reward": 0.0,
+  "done": false
+}</code></pre>
+
+    <h3>POST /step</h3>
+    <p>Execute one agent action.</p>
+    <pre><code>curl -X POST https://chinu248-smartops-openenv-final.hf.space/step \
+  -H "Content-Type: application/json" \
+  -d '{"action": "triage"}'
+
+# Response:
+{
+  "observation": "triage:billing",
+  "reward": 0.3,
+  "done": false
+}</code></pre>
+
+    <h3>GET /state</h3>
+    <p>Get current environment state.</p>
+    <pre><code>curl https://chinu248-smartops-openenv-final.hf.space/state
+
+# Response:
+{
+  "observation": "ready",
+  "reward": 0.0,
+  "done": false,
+  "step_count": 0,
+  "shared_memory": {},
+  "email": {}
+}</code></pre>
+
+    <h3>POST /process-email</h3>
+    <p>End-to-end email processing through all agents.</p>
+    <pre><code>curl -X POST https://chinu248-smartops-openenv-final.hf.space/process-email \
+  -H "Content-Type: application/json" \
+  -d '{
+    "subject": "URGENT: Website is down",
+    "body": "We are losing money every minute!",
+    "customer_tier": "premium"
+  }'
+
+# Response:
+{
+  "category": "technical",
+  "urgency": 5,
+  "response": "We are aware of the issue and fixing it urgently.",
+  "escalated": true,
+  "priority": 5,
+  "score": 1.0
+}</code></pre>
+  </div>
+
+  <!-- AUTOMATION -->
+  <div id="automation" class="section">
+    <h2>🔄 n8n Automation</h2>
+    <p>SmartOps connects to real-world Gmail via n8n for fully automated email processing.</p>
+
+    <h3>Workflow</h3>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-icon">📧</div>
+        <div class="flow-content">
+          <div class="flow-name">Gmail Trigger</div>
+          <div class="flow-detail">Polls inbox every minute for new emails</div>
+        </div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="flow-icon">🌐</div>
+        <div class="flow-content">
+          <div class="flow-name">HTTP Request</div>
+          <div class="flow-detail">POST to HF Spaces with email data</div>
+        </div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="flow-icon">📤</div>
+        <div class="flow-content">
+          <div class="flow-name">Gmail Send</div>
+          <div class="flow-detail">AI reply sent to customer automatically</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>n8n Expressions Used</h3>
+    <pre><code># To field:
+{{ $('Gmail Trigger').first().json.From }}
+
+# Subject field:
+{{ "Re: " + $('Gmail Trigger').first().json.Subject }}
+
+# Message field:
+{{ $('HTTP Request').first().json.response }}
+
+# HTTP Request Body:
+{
+  "subject": "{{ $('Gmail Trigger').first().json.Subject }}",
+  "body":    "{{ $('Gmail Trigger').first().json.snippet }}",
+  "customer_tier": "user"
+}</code></pre>
+
+    <h3>Gmail Trigger Filter</h3>
+    <pre><code># Exclude bounce emails and self-emails:
+-from:mailer-daemon@googlemail.com -from:chinmaikn@gmail.com</code></pre>
+  </div>
+
+  <!-- DEPLOYMENT -->
+  <div id="deployment" class="section">
+    <h2>🐳 Deployment</h2>
+
+    <h3>Dockerfile</h3>
+    <pre><code>FROM python:3.10-slim
+
+RUN useradd -m -u 1000 user
+USER user
+ENV PATH="/home/user/.local/bin:$PATH"
+
+WORKDIR /app
+COPY --chown=user ./requirements.txt requirements.txt
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
+COPY --chown=user . /app
+
+EXPOSE 7860
+CMD ["python", "-m", "uvicorn", "server.app:app", \
+     "--host", "0.0.0.0", "--port", "7860"]</code></pre>
+
+    <h3>Run Locally</h3>
+    <pre><code># Install dependencies
+pip install -r requirements.txt
+
+# Start server
+python -m uvicorn server.app:app --host 0.0.0.0 --port 7860
+
+# Test
+curl -X POST http://localhost:7860/reset</code></pre>
+
+    <h3>Deploy to HF Spaces</h3>
+    <pre><code>git remote add hf https://huggingface.co/spaces/chinu248/smartops-openenv-final
+git push hf main</code></pre>
+
+    <h3>Environment Variables</h3>
+    <table>
+      <tr><th>Variable</th><th>Default</th><th>Purpose</th></tr>
+      <tr><td>API_BASE_URL</td><td>http://127.0.0.1:7860</td><td>API endpoint for inference</td></tr>
+      <tr><td>MODEL_NAME</td><td>gpt-4o-mini</td><td>LLM model name</td></tr>
+      <tr><td>HF_TOKEN</td><td>—</td><td>Hugging Face API token</td></tr>
+    </table>
+  </div>
+
+  <!-- RESUME -->
+  <div id="resume" class="section">
+    <h2>📄 Resume Notes</h2>
+
+    <h3>One-Line Description</h3>
+    <div class="card">
+      <div class="card-desc" style="font-size: 0.95rem; line-height: 1.8;">
+        "Built a production-ready AI multi-agent customer support environment using Meta's OpenEnv framework, deployed on Hugging Face Spaces with end-to-end Gmail automation via n8n achieving perfect benchmark scores of 1.0/1.0"
+      </div>
+    </div>
+
+    <h3>Resume Bullet Points</h3>
+    <pre><code>SmartOps OpenEnv — AI Multi-Agent Customer Support System
+Meta × Hugging Face OpenEnv Hackathon | Python, FastAPI, Docker
+
+• Built production-ready RL environment using Meta's OpenEnv framework
+  with full spec compliance (reset/step/state API) — passed all 4 checks
+
+• Designed multi-agent architecture with 3 specialized AI agents
+  (Triage, Response, Escalation) achieving perfect scores of 1.0/1.0
+
+• Implemented weighted reward function with partial progress signals
+  for RL training using PPO (Stable-Baselines3)
+
+• Deployed FastAPI backend on Hugging Face Spaces via Docker,
+  serving real-time AI inference at production scale
+
+• Built end-to-end email automation pipeline using n8n + Gmail API
+  — zero human interaction required, fully automated
+
+Tech: Python · FastAPI · Docker · Hugging Face · n8n · OpenEnv · PPO</code></pre>
+
+    <h3>Key Numbers to Remember</h3>
+    <table>
+      <tr><th>Metric</th><th>Value</th></tr>
+      <tr><td>All task scores</td><td style="color: var(--green); font-weight: 700;">1.0 / 1.0</td></tr>
+      <tr><td>Hackathon checks passed</td><td style="color: var(--green); font-weight: 700;">4 / 4 ✅</td></tr>
+      <tr><td>Number of agents</td><td>3</td></tr>
+      <tr><td>API endpoints</td><td>5</td></tr>
+      <tr><td>Reward factors</td><td>4</td></tr>
+      <tr><td>Prize pool</td><td>$30,000</td></tr>
+    </table>
+  </div>
+
+  <!-- INTERVIEW -->
+  <div id="interview" class="section">
+    <h2>💬 Interview Prep</h2>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">
+        Explain your project in 30 seconds
+        <span class="qa-arrow">▼</span>
+      </div>
+      <div class="qa-a">
+        "I built an AI system that automatically handles customer support emails. When an email arrives, three AI agents work together — one classifies the email, one writes the reply, and one decides if it needs escalation. The whole system is built as a reinforcement learning environment following Meta's OpenEnv standard, deployed on Hugging Face Spaces, and connected to Gmail via n8n for full automation with zero human interaction."
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">
+        What is OpenEnv?
+        <span class="qa-arrow">▼</span>
+      </div>
+      <div class="qa-a">
+        "OpenEnv is Meta's open-source framework for building standardized reinforcement learning environments. Think of it like OpenAI Gym but for real-world tasks and LLM post-training. It defines a standard API — reset(), step(), state() — so any RL agent can interact with any environment in the same way. I implemented all 3 methods in my FastAPI server with full spec_version 1 compliance."
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">
+        Why multi-agent instead of single agent?
+        <span class="qa-arrow">▼</span>
+      </div>
+      <div class="qa-a">
+        "Real support teams have specialists — a billing specialist handles refunds differently than a technical specialist handles outages. By splitting into specialized agents, each one can be optimized for its specific task. They also share memory so decisions are collaborative. This mirrors real enterprise workflows and improves accuracy compared to a single generalist agent."
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">
+        How does your reward function work?
+        <span class="qa-arrow">▼</span>
+      </div>
+      <div class="qa-a">
+        "It has 4 weighted components — category accuracy at 0.4 weight (most important), response quality at 0.3, escalation correctness at 0.2, and priority at 0.1. There's also an inefficiency penalty if the agent takes more than 4 steps. This gives partial rewards at each stage so the RL agent gets learning signal even for partially correct outputs, which speeds up training."
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">
+        What is PPO and why did you use it?
+        <span class="qa-arrow">▼</span>
+      </div>
+      <div class="qa-a">
+        "PPO stands for Proximal Policy Optimization. It's an RL algorithm that updates the policy in small, safe steps to prevent large destabilizing updates. I chose it because it's stable, sample-efficient, and the industry standard — used by OpenAI and Meta. Compared to vanilla policy gradient, PPO is more stable, and compared to TRPO, it's simpler to implement. I used Stable-Baselines3's PPO implementation."
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">
+        What was your biggest challenge?
+        <span class="qa-arrow">▼</span>
+      </div>
+      <div class="qa-a">
+        "Two main challenges. First, getting n8n expressions to evaluate correctly — the Gmail Send node was treating {{ $json.From }} as plain text instead of evaluating it because the Fixed/Expression mode toggle wasn't obvious. Second, aligning the openenv.yaml format with the hackathon validator which required spec_version: 1 format — earlier versions used a different schema that failed validation."
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">
+        How would you scale this system?
+        <span class="qa-arrow">▼</span>
+      </div>
+      <div class="qa-a">
+        "Several improvements: Add Redis for distributed shared memory between agents, PostgreSQL for email logging and analytics, Celery for async processing of high-volume emails, deploy n8n on Railway or Render for 24/7 automation without needing my PC on, upgrade agents from rule-based to LLM-based using Llama or GPT for better response quality, and add a feedback loop where customer replies improve the model over time."
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">
+        What is Docker and why did you use it?
+        <span class="qa-arrow">▼</span>
+      </div>
+      <div class="qa-a">
+        "Docker packages the entire application — code, dependencies, configuration — into a container that runs identically anywhere. Without Docker, 'it works on my machine' is a common problem. I used it because Hugging Face Spaces requires Docker for custom deployments, and it ensures the app runs the same locally and in production. My Dockerfile uses port 7860 which is required by HF Spaces."
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)">
+        What is FastAPI and why not Flask?
+        <span class="qa-arrow">▼</span>
+      </div>
+      <div class="qa-a">
+        "FastAPI is faster than Flask, has automatic API documentation at /docs via Swagger UI, built-in Pydantic validation for type-safe inputs, and async support for high concurrency. For an RL environment that needs to handle multiple requests efficiently, FastAPI's performance and automatic validation are important advantages over Flask."
+      </div>
+    </div>
+  </div>
+
+  <!-- LINKS -->
+  <div id="links" class="section">
+    <h2>🔗 Important Links</h2>
+
+    <div class="link-cards">
+      <a class="link-card" href="https://chinu248-smartops-openenv-final.hf.space" target="_blank">
+        <div class="link-icon">🚀</div>
+        <div>
+          <div class="link-title">Live API</div>
+          <div class="link-url">chinu248-smartops-openenv-final.hf.space</div>
+        </div>
+      </a>
+      <a class="link-card" href="https://chinu248-smartops-openenv-final.hf.space/docs" target="_blank">
+        <div class="link-icon">📖</div>
+        <div>
+          <div class="link-title">API Docs (Swagger)</div>
+          <div class="link-url">hf.space/docs</div>
+        </div>
+      </a>
+      <a class="link-card" href="https://github.com/Chinmaya24/smartops-openenv" target="_blank">
+        <div class="link-icon">💻</div>
+        <div>
+          <div class="link-title">GitHub Repository</div>
+          <div class="link-url">github.com/Chinmaya24/smartops-openenv</div>
+        </div>
+      </a>
+      <a class="link-card" href="https://huggingface.co/spaces/chinu248/smartops-openenv-final" target="_blank">
+        <div class="link-icon">🤗</div>
+        <div>
+          <div class="link-title">HF Space</div>
+          <div class="link-url">huggingface.co/spaces/chinu248</div>
+        </div>
+      </a>
+    </div>
+
+    <h3>Hackathon</h3>
+    <ul class="checklist">
+      <li><span class="check">✅</span> OpenEnv Reset (POST OK)</li>
+      <li><span class="check">✅</span> Dockerfile at repo root</li>
+      <li><span class="check">✅</span> inference.py at repo root</li>
+      <li><span class="check">✅</span> openenv validate</li>
+      <li><span class="check">🗓️</span> Results announced: 10th April 2026</li>
+    </ul>
+  </div>
+
+</main>
+
+<script>
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function toggleQA(el) {
+  el.parentElement.classList.toggle('open');
+}
+</script>
+</body>
+</html>
