@@ -3,7 +3,7 @@ from typing import Any, Dict
 
 
 def _clamp(score: float) -> float:
-    return max(0.01, min(0.99, score))
+    return max(0.1, min(0.9, score))
 
 
 def grade_task(task_name: str, result: Dict[str, Any]) -> float:
