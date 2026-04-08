@@ -52,36 +52,31 @@ def post(path: str, payload: Dict[str, Any]) -> Dict[str, Any]:
         return response.json()
     except requests.exceptions.RequestException as e:
         print(f"[ERROR] Request failed for {path}: {e}", file=sys.stderr)
-        return {}  # ← never sys.exit, return empty dict so grader uses fallbacks
+        raise
 
 
 def run_task(task_name: str, email_input: Dict[str, Any]) -> float:
-    try:
-        post("/reset", {})
+    post("/reset", {})
 
-        prompt = (
-            f"Analyze this support email:\n"
-            f"Subject: {email_input.get('subject', '')}\n"
-            f"Body: {email_input.get('body', '')}\n\n"
-            f"Classify it and suggest appropriate action."
-        )
-        llm_response = llm_call(prompt)
-        print(f"[LLM] {task_name}: {llm_response[:80]}", file=sys.stderr)
+    prompt = (
+        f"Analyze this support email:\n"
+        f"Subject: {email_input.get('subject', '')}\n"
+        f"Body: {email_input.get('body', '')}\n\n"
+        f"Classify it and suggest appropriate action."
+    )
+    llm_response = llm_call(prompt)
+    print(f"[LLM] {task_name}: {llm_response[:80]}", file=sys.stderr)
 
-        result = post("/process-email", email_input)
+    result = post("/process-email", email_input)
 
-        structured_result = {
-            "task": email_input,   # contains evaluation_rules for grader
-            "memory": result,      # contains category/priority/escalated from server
-            "step_count": 1
-        }
+    structured_result = {
+        "task": email_input,   # contains evaluation_rules for grader
+        "memory": result,      # contains category/priority/escalated from server
+        "step_count": 1
+    }
 
-        score = grade_task(task_name, structured_result)
-        return max(0.01, min(0.99, float(score)))  # strictly (0, 1)
-
-    except Exception as e:
-        print(f"[ERROR] Task {task_name} failed: {e}", file=sys.stderr)
-        return 0.5  # safe fallback, strictly in (0, 1)
+    score = grade_task(task_name, structured_result)
+    return max(0.01, min(0.99, float(score)))  # strictly (0, 1)
 
 
 def main() -> None:
