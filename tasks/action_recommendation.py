@@ -20,3 +20,9 @@ INPUT_EXAMPLE: Dict[str, Any] = {
 EXPECTED_OUTPUT: Dict[str, Any] = {
     "escalated": False,
 }
+
+
+def grade(result: Dict[str, Any]) -> float:
+    """Delegate to centralized grader in tasks/graders.py"""
+    from tasks.graders import grade_action_recommendation
+    return grade_action_recommendation(result)

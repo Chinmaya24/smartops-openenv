@@ -18,3 +18,8 @@ INPUT_EXAMPLE: Dict[str, Any] = {
 EXPECTED_OUTPUT: Dict[str, Any] = {
     "priority": 5,
 }
+
+def grade(result: Dict[str, Any]) -> float:
+    """Delegate to centralized grader in tasks/graders.py"""
+    from tasks.graders import grade_urgency_detection
+    return grade_urgency_detection(result)

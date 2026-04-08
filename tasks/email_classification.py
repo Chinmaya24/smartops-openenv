@@ -21,4 +21,8 @@ EXPECTED_OUTPUT: Dict[str, Any] = {
     "category": "billing",
 }
 
-# ✅ IMPORTANT: never return 0 or 1
+
+def grade(result: Dict[str, Any]) -> float:
+    """Delegate to centralized grader in tasks/graders.py"""
+    from tasks.graders import grade_email_classification
+    return grade_email_classification(result)
