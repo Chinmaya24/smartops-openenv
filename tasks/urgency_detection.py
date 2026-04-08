@@ -20,11 +20,3 @@ INPUT_EXAMPLE: Dict[str, Any] = {
 EXPECTED_OUTPUT: Dict[str, Any] = {
     "priority": 2,
 }
-
-def grade(output: Dict[str, Any]) -> float:
-    priority = int(output.get("priority", 0))
-
-    if priority >= 2:
-        return 0.85
-    else:
-        return 0.15

@@ -97,19 +97,8 @@ def run_task(task_name: str, email_input: Dict[str, Any]) -> float:
         }
 
         # ✅ Grading
-        raw_score = grade_task(task_name, structured_result)
-
-        if raw_score is None:
-            raw_score = 0.5
-
-        # ✅ Ensure STRICT (0,1)
-        if raw_score <= 0.0:
-            score = 0.1
-        elif raw_score >= 1.0:
-            score = 0.9
-        else:
-            score = raw_score
-
+        score = grade_task(task_name, structured_result)
+        score = max(0.1, min(0.9, score))
         return score
 
     except Exception as e:

@@ -2,16 +2,37 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from tasks.action_recommendation import grade as grade_action_recommendation
-from tasks.email_classification import grade as grade_email_classification
-from tasks.urgency_detection import grade as grade_urgency_detection
+
+def _clamp_score(score: float) -> float:
+    return max(0.1, min(0.9, score))
 
 
-def grade_task(task_name: str, output: Dict[str, Any]) -> float:
+def grade_task(task_name: str, structured_result: Dict[str, Any]) -> float:
+    task_input = structured_result.get("task", {}) or {}
+    memory = structured_result.get("memory", {}) or {}
+    evaluation_rules = task_input.get("evaluation_rules", {}) or {}
+
     if task_name == "email_classification":
-        return grade_email_classification(output)
+        expected_category = str(evaluation_rules.get("category", "")).lower()
+        actual_category = str(memory.get("category", "")).lower()
+        return _clamp_score(0.8 if actual_category == expected_category else 0.2)
+
     if task_name == "urgency_detection":
-        return grade_urgency_detection(output)
+        expected_priority = int(evaluation_rules.get("priority", 0))
+        actual_priority = int(memory.get("priority", 0))
+        return _clamp_score(0.8 if actual_priority == expected_priority else 0.2)
+
     if task_name == "action_recommendation":
-        return grade_action_recommendation(output)
-    return 0.0
+        expected_escalated = bool(evaluation_rules.get("escalated", False))
+        actual_escalated = bool(memory.get("escalated", False))
+        response = str(memory.get("response", "")).lower()
+        keywords = [str(k).lower() for k in evaluation_rules.get("response_keywords", []) if isinstance(k, str)]
+        has_keyword = any(keyword in response for keyword in keywords)
+
+        if actual_escalated == expected_escalated and has_keyword:
+            return _clamp_score(0.8)
+        if actual_escalated == expected_escalated:
+            return _clamp_score(0.7)
+        return _clamp_score(0.2)
+
+    raise ValueError(f"Unknown task: {task_name}")

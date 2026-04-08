@@ -20,11 +20,3 @@ INPUT_EXAMPLE: Dict[str, Any] = {
 EXPECTED_OUTPUT: Dict[str, Any] = {
     "escalated": False,
 }
-
-def grade(output: Dict[str, Any]) -> float:
-    response = str(output.get("response", "")).lower()
-
-    if any(k in response for k in ["help", "support", "assist"]):
-        return 0.88
-    else:
-        return 0.12
