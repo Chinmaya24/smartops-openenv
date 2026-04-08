@@ -1,9 +1,12 @@
 from __future__ import annotations
 from typing import Any, Dict
 
+EPSILON = 1e-6
+
 
 def _clamp(score: float) -> float:
-    return max(0.1, min(0.9, score))
+    """Clamp score to (0, 1) with epsilon margins to avoid exact boundaries."""
+    return max(EPSILON, min(1.0 - EPSILON, float(score)))
 
 
 def grade_task(task_name: str, result: Dict[str, Any]) -> float:

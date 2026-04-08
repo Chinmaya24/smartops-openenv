@@ -76,7 +76,8 @@ def run_task(task_name: str, email_input: Dict[str, Any]) -> float:
     }
 
     score = grade_task(task_name, structured_result)
-    return max(0.1, min(0.9, float(score)))  # strictly (0, 1)
+    # Use epsilon to ensure strictly (0, 1)
+    return max(1e-6, min(1.0 - 1e-6, float(score)))
 
 
 def main() -> None:
@@ -90,7 +91,7 @@ def main() -> None:
 
     for task_name, payload in tasks:
         score = run_task(task_name, payload)
-        score = max(0.1, min(0.9, float(score)))  # final safety clamp
+        score = max(1e-6, min(1.0 - 1e-6, float(score)))  # epsilon-based clamp
         print(f"[STEP] task={task_name} score={score:.4f}")
 
     print("[END]")
