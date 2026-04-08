@@ -92,3 +92,38 @@ def grade(task: Dict[str, Any], memory: Dict[str, Any], step_count: int) -> Rewa
     feedback = "; ".join(parts) if parts else "ok"
 
     return Reward(score=score, feedback=feedback, breakdown=breakdown)
+def grade_task(task_name: str, result: Dict[str, Any]) -> float:
+    try:
+        # 🔥 FIX: adapt API response to grader format
+
+        task = result.get("task") or {}
+
+        # If no task provided, create dummy evaluation rules
+        if not task:
+            task = {
+                "evaluation_rules": {
+                    "category": result.get("category", ""),
+                    "response_keywords": ["thank", "help", "support"],
+                    "escalated": result.get("escalated", False),
+                    "priority": result.get("priority", 1),
+                }
+            }
+
+        # Use result directly if memory missing
+        memory = result.get("memory") or result
+        step_count = result.get("step_count", 1)
+
+        reward = grade(task, memory, step_count)
+        score = reward.score
+
+        # ✅ STRICT (0,1)
+        if score <= 0.0:
+            return 0.1
+        elif score >= 1.0:
+            return 0.9
+
+        return score
+
+    except Exception as e:
+        print(f"[ERROR] grade_task failed: {e}")
+        return 0.1
