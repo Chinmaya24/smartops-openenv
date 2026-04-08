@@ -4,3 +4,19 @@ type: environment
 runtime: docker
 app: server/app.py
 port: 7860
+
+tasks:
+  - name: email_classification
+    grader: tasks.graders.grade_task
+    input: tasks.email_classification.INPUT_EXAMPLE
+    expected_output: tasks.email_classification.EXPECTED_OUTPUT
+
+  - name: urgency_detection
+    grader: tasks.graders.grade_task
+    input: tasks.urgency_detection.INPUT_EXAMPLE
+    expected_output: tasks.urgency_detection.EXPECTED_OUTPUT
+
+  - name: action_recommendation
+    grader: tasks.graders.grade_task
+    input: tasks.action_recommendation.INPUT_EXAMPLE
+    expected_output: tasks.action_recommendation.EXPECTED_OUTPUT

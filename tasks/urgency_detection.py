@@ -7,16 +7,14 @@ INPUT_EXAMPLE: Dict[str, Any] = {
     "subject": "Server down",
     "body": "My website is down, fix ASAP!",
     "customer_tier": "premium",
-
-    # ✅ REQUIRED
     "evaluation_rules": {
         "category": "technical",
         "response_keywords": ["urgent", "asap", "immediately"],
         "escalated": True,
-        "priority": 2,
+        "priority": 5,
     }
 }
 
 EXPECTED_OUTPUT: Dict[str, Any] = {
-    "priority": 2,
+    "priority": 5,
 }
