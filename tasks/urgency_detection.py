@@ -1,25 +1,22 @@
-from __future__ import annotations
-from typing import Any, Dict
+spec_version: 1
+name: smartops-openenv
+type: environment
+runtime: docker
+app: server/app.py
+port: 7860
 
-TASK_NAME = "urgency_detection"
+tasks:
+  - name: email_classification
+    grader: tasks.email_classification.grade
+    input: tasks.email_classification.INPUT_EXAMPLE
+    expected_output: tasks.email_classification.EXPECTED_OUTPUT
 
-INPUT_EXAMPLE: Dict[str, Any] = {
-    "subject": "Server down",
-    "body": "My website is down, fix ASAP!",
-    "customer_tier": "premium",
-    "evaluation_rules": {
-        "category": "technical",
-        "response_keywords": ["urgent", "asap", "immediately"],
-        "escalated": True,
-        "priority": 5,
-    }
-}
+  - name: urgency_detection
+    grader: tasks.urgency_detection.grade
+    input: tasks.urgency_detection.INPUT_EXAMPLE
+    expected_output: tasks.urgency_detection.EXPECTED_OUTPUT
 
-EXPECTED_OUTPUT: Dict[str, Any] = {
-    "priority": 5,
-}
-
-def grade(result: Dict[str, Any]) -> float:
-    """Delegate to centralized grader in tasks/graders.py"""
-    from tasks.graders import grade_urgency_detection
-    return grade_urgency_detection(result)
+  - name: action_recommendation
+    grader: tasks.action_recommendation.grade
+    input: tasks.action_recommendation.INPUT_EXAMPLE
+    expected_output: tasks.action_recommendation.EXPECTED_OUTPUT
