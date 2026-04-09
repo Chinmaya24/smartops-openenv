@@ -22,4 +22,31 @@ EXPECTED_OUTPUT: Dict[str, Any] = {
 }
 
 
+def _safe_clamp(score: float) -> float:
+    return max(0.001, min(0.999, float(score)))
+
+
+def _extract_task_and_output(*args: Any, **kwargs: Any) -> tuple[Dict[str, Any], Dict[str, Any]]:
+    task = kwargs.get("task")
+    output = kwargs.get("output")
+    if len(args) >= 2:
+        task, output = args[0], args[1]
+    elif len(args) == 1:
+        maybe = args[0]
+        if isinstance(maybe, dict) and "category" in maybe:
+            output = maybe
+        else:
+            task = maybe
+    return (task or {}, output or {})
+
+
+def grade(*args: Any, **kwargs: Any) -> float:
+    task, output = _extract_task_and_output(*args, **kwargs)
+    rules = task.get("evaluation_rules", {})
+    expected = str(rules.get("category", "")).lower()
+    actual = str(output.get("category", "")).lower()
+    score = 0.9 if actual == expected else 0.2
+    return _safe_clamp(score)
+
+
 
