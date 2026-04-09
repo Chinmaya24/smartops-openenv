@@ -1,22 +1,29 @@
-spec_version: 1
-name: smartops-openenv
-type: environment
-runtime: docker
-app: server/app.py
-port: 7860
+from __future__ import annotations
+from typing import Any, Dict
 
-tasks:
-  - name: email_classification
-    grader: tasks.email_classification.grade
-    input: tasks.email_classification.INPUT_EXAMPLE
-    expected_output: tasks.email_classification.EXPECTED_OUTPUT
+TASK_NAME = "urgency_detection"
 
-  - name: urgency_detection
-    grader: tasks.urgency_detection.grade
-    input: tasks.urgency_detection.INPUT_EXAMPLE
-    expected_output: tasks.urgency_detection.EXPECTED_OUTPUT
+INPUT_EXAMPLE: Dict[str, Any] = {
+    "subject": "URGENT: Production server is down",
+    "body": "Our production environment has been completely unavailable for 30 minutes. All users are affected.",
+    "customer_tier": "enterprise",
 
-  - name: action_recommendation
-    grader: tasks.action_recommendation.grade
-    input: tasks.action_recommendation.INPUT_EXAMPLE
-    expected_output: tasks.action_recommendation.EXPECTED_OUTPUT
+    # ✅ REQUIRED
+    "evaluation_rules": {
+        "category": "technical",
+        "response_keywords": ["escalate", "urgent", "critical"],
+        "escalated": True,
+        "priority": 3,
+    }
+}
+
+EXPECTED_OUTPUT: Dict[str, Any] = {
+    "priority": 3,
+    "escalated": True,
+}
+
+
+def grade(result: Dict[str, Any]) -> float:
+    """Delegate to centralized grader in tasks/graders.py"""
+    from tasks.graders import grade_urgency_detection
+    return grade_urgency_detection(result)
