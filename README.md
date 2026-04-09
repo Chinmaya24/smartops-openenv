@@ -91,10 +91,10 @@ Built for the **Meta × Hugging Face OpenEnv Hackathon**, it demonstrates:
 
 | Task | Difficulty | Score |
 |------|-----------|-------|
-| 📧 Email Classification | 🟢 Easy | **1.0000** |
-| ⚡ Urgency Detection | 🟡 Medium | **1.0000** |
-| 🎯 Action Recommendation | 🔴 Hard | **1.0000** |
-| | **Average** | **1.0000** ✅ |
+| 📧 Email Classification | 🟢 Easy | **0.9000** |
+| ⚡ Urgency Detection | 🟡 Medium | **0.9000** |
+| 🎯 Action Recommendation | 🔴 Hard | **0.9000** |
+| | **Average** | **0.9000** ✅ |
 
 ---
 
@@ -108,7 +108,7 @@ score = category_match (0.4)
       - inefficiency_penalty (step_count > 4)
 ```
 
-Scores normalized to `[0.0, 1.0]` with partial progress signals at each step.
+Scores normalized to the open interval `(0.0, 1.0)` with partial progress signals at each step.
 
 ---
 
@@ -147,7 +147,7 @@ Returns:
   "response": "We are aware of the issue and fixing it urgently.",
   "escalated": true,
   "priority": 5,
-  "score": 1.0
+  "score": 0.85
 }
 ```
 
@@ -174,9 +174,9 @@ python inference.py
 Output:
 ```
 [START]
-[STEP] task=email_classification score=1.0
-[STEP] task=urgency_detection    score=1.0
-[STEP] task=action_recommendation score=1.0
+[STEP] task=email_classification score=0.9
+[STEP] task=urgency_detection    score=0.9
+[STEP] task=action_recommendation score=0.9
 [END]
 ```
 
@@ -247,7 +247,7 @@ smartops-openenv/
 
 - ✅ **Real-world use case** — not a toy or game
 - ✅ **Full OpenEnv compliance** — spec_version 1
-- ✅ **Perfect benchmark scores** — 1.0 on all tasks
+- ✅ **Strong benchmark scores** — strictly within (0,1) on all tasks
 - ✅ **Production deployment** — live on HF Spaces
 - ✅ **End-to-end automation** — Gmail → AI → Reply
 - ✅ **Multi-agent architecture** — 3 specialized agents

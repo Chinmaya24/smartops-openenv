@@ -550,11 +550,11 @@
         <span class="badge badge-green">All Checks ✅</span>
       </div>
       <h1>SmartOps OpenEnv</h1>
-      <p class="hero-desc">A production-ready AI multi-agent customer support environment built for the Meta × Hugging Face OpenEnv Hackathon. Fully automated, deployed, and scoring 1.0 on all benchmark tasks.</p>
+      <p class="hero-desc">A production-ready AI multi-agent customer support environment built for the Meta × Hugging Face OpenEnv Hackathon. Fully automated, deployed, and keeping all benchmark task scores strictly within (0,1).</p>
 
       <div class="score-cards">
         <div class="score-card">
-          <div class="score-value">1.0</div>
+          <div class="score-value">0.9</div>
           <div class="score-label">Average Score</div>
         </div>
         <div class="score-card">
@@ -795,25 +795,25 @@ shared_memory = {"category": "billing", "urgency": 2,
         <td>🟢 Easy</td>
         <td>"Charged twice for subscription"</td>
         <td>category: billing</td>
-        <td style="color: var(--green); font-weight: 700; font-family: monospace;">1.0000</td>
+        <td style="color: var(--green); font-weight: 700; font-family: monospace;">0.9000</td>
       </tr>
       <tr>
         <td>Urgency Detection</td>
         <td>🟡 Medium</td>
         <td>"URGENT: System outage in production"</td>
         <td>urgency: 5, escalated: true</td>
-        <td style="color: var(--green); font-weight: 700; font-family: monospace;">1.0000</td>
+        <td style="color: var(--green); font-weight: 700; font-family: monospace;">0.9000</td>
       </tr>
       <tr>
         <td>Action Recommendation</td>
         <td>🔴 Hard</td>
         <td>"Cannot login after password reset"</td>
         <td>escalated: false, priority ≤ 3</td>
-        <td style="color: var(--green); font-weight: 700; font-family: monospace;">1.0000</td>
+        <td style="color: var(--green); font-weight: 700; font-family: monospace;">0.9000</td>
       </tr>
       <tr>
         <td colspan="4" style="font-weight: 700; text-align: right;">Average Score</td>
-        <td style="color: var(--green); font-weight: 800; font-family: monospace; font-size: 1.1rem;">1.0000 ✅</td>
+        <td style="color: var(--green); font-weight: 800; font-family: monospace; font-size: 1.1rem;">0.9000 ✅</td>
       </tr>
     </table>
 
@@ -821,11 +821,11 @@ shared_memory = {"category": "billing", "urgency": 2,
     <pre><code>python scripts/run_baseline.py
 
 # Output:
-task=email_classification  difficulty=easy    score=1.0000
-task=urgency_detection     difficulty=medium  score=1.0000
-task=action_recommendation difficulty=hard    score=1.0000
+task=email_classification  difficulty=easy    score=0.9000
+task=urgency_detection     difficulty=medium  score=0.9000
+task=action_recommendation difficulty=hard    score=0.9000
 
-average_score=1.0000</code></pre>
+average_score=0.9000</code></pre>
   </div>
 
   <!-- REWARD -->
@@ -864,7 +864,7 @@ average_score=1.0000</code></pre>
       + priority_correct    × 0.1
       - inefficiency_penalty        # if step_count > 4
 
-# Clipped to [0.0, 1.0]
+# Clipped to (0.0, 1.0)
 # Partial progress signals at each step</code></pre>
 
     <h3>Why These Weights?</h3>
@@ -936,7 +936,7 @@ average_score=1.0000</code></pre>
   "response": "We are aware of the issue and fixing it urgently.",
   "escalated": true,
   "priority": 5,
-  "score": 1.0
+  "score": 0.85
 }</code></pre>
   </div>
 
@@ -1044,7 +1044,7 @@ git push hf main</code></pre>
     <h3>One-Line Description</h3>
     <div class="card">
       <div class="card-desc" style="font-size: 0.95rem; line-height: 1.8;">
-        "Built a production-ready AI multi-agent customer support environment using Meta's OpenEnv framework, deployed on Hugging Face Spaces with end-to-end Gmail automation via n8n achieving perfect benchmark scores of 1.0/1.0"
+        "Built a production-ready AI multi-agent customer support environment using Meta's OpenEnv framework, deployed on Hugging Face Spaces with end-to-end Gmail automation via n8n while keeping all task scores strictly within (0,1)."
       </div>
     </div>
 
@@ -1056,7 +1056,7 @@ Meta × Hugging Face OpenEnv Hackathon | Python, FastAPI, Docker
   with full spec compliance (reset/step/state API) — passed all 4 checks
 
 • Designed multi-agent architecture with 3 specialized AI agents
-  (Triage, Response, Escalation) achieving perfect scores of 1.0/1.0
+  (Triage, Response, Escalation) with strict open-interval scoring guarantees
 
 • Implemented weighted reward function with partial progress signals
   for RL training using PPO (Stable-Baselines3)
@@ -1072,7 +1072,7 @@ Tech: Python · FastAPI · Docker · Hugging Face · n8n · OpenEnv · PPO</code
     <h3>Key Numbers to Remember</h3>
     <table>
       <tr><th>Metric</th><th>Value</th></tr>
-      <tr><td>All task scores</td><td style="color: var(--green); font-weight: 700;">1.0 / 1.0</td></tr>
+      <tr><td>All task scores</td><td style="color: var(--green); font-weight: 700;">strictly within (0,1)</td></tr>
       <tr><td>Hackathon checks passed</td><td style="color: var(--green); font-weight: 700;">4 / 4 ✅</td></tr>
       <tr><td>Number of agents</td><td>3</td></tr>
       <tr><td>API endpoints</td><td>5</td></tr>
