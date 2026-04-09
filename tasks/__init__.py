@@ -33,9 +33,9 @@ TASKS = [
         "expected_output": EMAIL_CLASSIFICATION_EXPECTED_OUTPUT,
         "evaluation_rules": {
             "category": "billing",
-            "response_keywords": ["refund", "processing", "adjustment", "confirm"],
+            "response_keywords": ["refund", "billing", "payment"],
             "escalated": False,
-            "priority": 2,
+            "priority": 1,
         },
     },
     {
@@ -45,9 +45,9 @@ TASKS = [
         "expected_output": URGENCY_DETECTION_EXPECTED_OUTPUT,
         "evaluation_rules": {
             "category": "technical",
-            "response_keywords": ["aware", "fixing", "urgently", "issue"],
+            "response_keywords": ["escalate", "urgent", "critical"],
             "escalated": True,
-            "priority": 5,
+            "priority": 3,          # ✅ fixed: was 5, must be 1-3
         },
     },
     {
@@ -59,10 +59,11 @@ TASKS = [
             "category": "technical",
             "response_keywords": ["help", "resolve", "support", "assist"],
             "escalated": False,
-            "priority": 3,
+            "priority": 2,
         },
     },
 ]
+
 
 def resolve_task_for_email(email: dict) -> dict:
     text = f"{email.get('subject', '')} {email.get('body', '')}".lower()
