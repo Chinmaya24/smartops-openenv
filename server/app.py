@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from agents import escalation_agent, response_agent, triage_agent
@@ -66,7 +67,7 @@ class RuntimeEnv:
             self.reward = 0.2
             self.done = False
         elif act in {"finalize", "manager"}:
-            self.reward = max(0.0, min(1.0, 1.0 - max(0, self.step_count - 4) * 0.05))
+            self.reward = max(0.01, min(0.99, 1.0 - max(0, self.step_count - 4) * 0.05))
             self.shared_memory["score"] = self.reward
             self.observation = "complete"
             self.done = True
@@ -77,7 +78,7 @@ class RuntimeEnv:
 
         return {
             "observation": self.observation,
-            "reward": float(max(0.0, min(1.0, self.reward))),
+            "reward": float(max(0.01, min(0.99, self.reward))),
             "done": bool(self.done),
         }
 
@@ -117,14 +118,80 @@ class RuntimeEnv:
 
 
 runtime = RuntimeEnv()
-app = FastAPI(title="SmartOps OpenEnv")
+app = FastAPI(title="SmartOps OpenEnv", version="0.1.0")
 
+
+# ── Standard OpenEnv required endpoints ────────────────────────────────────
+
+@app.get("/health")
+def health() -> Dict[str, Any]:
+    return {"status": "healthy"}
+
+
+@app.get("/metadata")
+def metadata() -> Dict[str, Any]:
+    return {
+        "name": "smartops-openenv",
+        "description": "SmartOps: AI-powered customer support triage environment with email classification, urgency detection, and action recommendation.",
+        "version": "0.1.0",
+    }
+
+
+@app.get("/schema")
+def schema() -> Dict[str, Any]:
+    return {
+        "action": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "enum": ["triage", "respond", "escalate", "finalize"],
+                }
+            },
+            "required": ["action"],
+        },
+        "observation": {
+            "type": "object",
+            "properties": {
+                "observation": {"type": "string"},
+                "reward": {"type": "number"},
+                "done": {"type": "boolean"},
+            },
+        },
+        "state": {
+            "type": "object",
+            "properties": {
+                "observation": {"type": "string"},
+                "reward": {"type": "number"},
+                "done": {"type": "boolean"},
+                "step_count": {"type": "integer"},
+                "shared_memory": {"type": "object"},
+                "email": {"type": "object"},
+            },
+        },
+    }
+
+
+@app.post("/mcp")
+async def mcp(request: Request) -> JSONResponse:
+    body = await request.json()
+    return JSONResponse({
+        "jsonrpc": "2.0",
+        "id": body.get("id", 1),
+        "result": {
+            "name": "smartops-openenv",
+            "description": "SmartOps customer support triage environment",
+        },
+    })
+
+
+# ── Existing endpoints ──────────────────────────────────────────────────────
 
 @app.get("/")
 def root() -> Dict[str, Any]:
     return {
         "status": "ok",
-        "endpoints": ["/", "/reset", "/step", "/state", "/process-email"],
+        "endpoints": ["/", "/health", "/metadata", "/schema", "/mcp", "/reset", "/step", "/state", "/process-email"],
     }
 
 
@@ -150,11 +217,8 @@ def process_email(payload: EmailRequest) -> Dict[str, Any]:
 
 def main() -> None:
     import uvicorn
-
     uvicorn.run("server.app:app", host="0.0.0.0", port=7860)
 
 
 if __name__ == "__main__":
     main()
-
-
