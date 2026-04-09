@@ -38,25 +38,37 @@ def _extract_task_and_output(*args: Any, **kwargs: Any) -> tuple[Dict[str, Any],
             output = maybe
         else:
             task = maybe
-    return (task or {}, output or {})
+    task_dict = task if isinstance(task, dict) else {}
+    output_dict = output if isinstance(output, dict) else {}
+    return task_dict, output_dict
 
 
 def grade(*args: Any, **kwargs: Any) -> float:
-    task, output = _extract_task_and_output(*args, **kwargs)
-    rules = task.get("evaluation_rules", {})
-    expected_priority = int(rules.get("priority", 0))
-    expected_escalated = bool(rules.get("escalated", False))
-    actual_priority = int(output.get("priority", 0))
-    actual_escalated = bool(output.get("escalated", False))
+    try:
+        task, output = _extract_task_and_output(*args, **kwargs)
+        rules = task.get("evaluation_rules", {}) if isinstance(task, dict) else {}
 
-    if actual_priority == expected_priority and actual_escalated == expected_escalated:
-        score = 0.9
-    elif actual_priority == expected_priority or actual_escalated == expected_escalated:
-        score = 0.6
-    else:
-        score = 0.2
+        def _safe_int(value: Any, default: int = 0) -> int:
+            try:
+                return int(value)
+            except (TypeError, ValueError):
+                return default
 
-    return _safe_clamp(score)
+        expected_priority = _safe_int(rules.get("priority", 0))
+        expected_escalated = bool(rules.get("escalated", False))
+        actual_priority = _safe_int(output.get("priority", 0))
+        actual_escalated = bool(output.get("escalated", False))
+
+        if actual_priority == expected_priority and actual_escalated == expected_escalated:
+            score = 0.9
+        elif actual_priority == expected_priority or actual_escalated == expected_escalated:
+            score = 0.6
+        else:
+            score = 0.2
+
+        return _safe_clamp(score)
+    except Exception:
+        return 0.5
 
 
 

@@ -37,30 +37,43 @@ def _extract_task_and_output(*args: Any, **kwargs: Any) -> tuple[Dict[str, Any],
             output = maybe
         else:
             task = maybe
-    return (task or {}, output or {})
+    task_dict = task if isinstance(task, dict) else {}
+    output_dict = output if isinstance(output, dict) else {}
+    return task_dict, output_dict
 
 
 def grade(*args: Any, **kwargs: Any) -> float:
-    task, output = _extract_task_and_output(*args, **kwargs)
-    rules = task.get("evaluation_rules", {})
-    expected_escalated = bool(rules.get("escalated", False))
-    expected_priority = int(rules.get("priority", 0))
-    actual_escalated = bool(output.get("escalated", False))
-    actual_priority = int(output.get("priority", 0))
-    response = str(output.get("response", "")).lower()
-    keywords = [str(k).lower() for k in rules.get("response_keywords", [])]
-    has_keywords = any(keyword in response for keyword in keywords)
+    try:
+        task, output = _extract_task_and_output(*args, **kwargs)
+        rules = task.get("evaluation_rules", {}) if isinstance(task, dict) else {}
 
-    if actual_escalated == expected_escalated and actual_priority == expected_priority and has_keywords:
-        score = 0.9
-    elif actual_escalated == expected_escalated and actual_priority == expected_priority:
-        score = 0.7
-    elif actual_escalated == expected_escalated or actual_priority == expected_priority:
-        score = 0.5
-    else:
-        score = 0.2
+        def _safe_int(value: Any, default: int = 0) -> int:
+            try:
+                return int(value)
+            except (TypeError, ValueError):
+                return default
 
-    return _safe_clamp(score)
+        expected_escalated = bool(rules.get("escalated", False))
+        expected_priority = _safe_int(rules.get("priority", 0))
+        actual_escalated = bool(output.get("escalated", False))
+        actual_priority = _safe_int(output.get("priority", 0))
+        response = str(output.get("response", "")).lower()
+        raw_keywords = rules.get("response_keywords", [])
+        keywords = [str(k).lower() for k in raw_keywords] if isinstance(raw_keywords, list) else []
+        has_keywords = any(keyword in response for keyword in keywords)
+
+        if actual_escalated == expected_escalated and actual_priority == expected_priority and has_keywords:
+            score = 0.9
+        elif actual_escalated == expected_escalated and actual_priority == expected_priority:
+            score = 0.7
+        elif actual_escalated == expected_escalated or actual_priority == expected_priority:
+            score = 0.5
+        else:
+            score = 0.2
+
+        return _safe_clamp(score)
+    except Exception:
+        return 0.5
 
 
 

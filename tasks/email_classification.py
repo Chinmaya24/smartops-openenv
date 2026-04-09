@@ -37,16 +37,21 @@ def _extract_task_and_output(*args: Any, **kwargs: Any) -> tuple[Dict[str, Any],
             output = maybe
         else:
             task = maybe
-    return (task or {}, output or {})
+    task_dict = task if isinstance(task, dict) else {}
+    output_dict = output if isinstance(output, dict) else {}
+    return task_dict, output_dict
 
 
 def grade(*args: Any, **kwargs: Any) -> float:
-    task, output = _extract_task_and_output(*args, **kwargs)
-    rules = task.get("evaluation_rules", {})
-    expected = str(rules.get("category", "")).lower()
-    actual = str(output.get("category", "")).lower()
-    score = 0.9 if actual == expected else 0.2
-    return _safe_clamp(score)
+    try:
+        task, output = _extract_task_and_output(*args, **kwargs)
+        rules = task.get("evaluation_rules", {}) if isinstance(task, dict) else {}
+        expected = str(rules.get("category", "")).lower()
+        actual = str(output.get("category", "")).lower()
+        score = 0.9 if actual == expected else 0.2
+        return _safe_clamp(score)
+    except Exception:
+        return 0.5
 
 
 
