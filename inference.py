@@ -16,7 +16,7 @@ HF_TOKEN     = os.environ.get("HF_TOKEN",     "")
 
 client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
 
-EPSILON = 1e-6
+EPSILON = 0.01
 
 
 # ---------------------------------------------------------------------------

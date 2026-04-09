@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Any, Dict
 
-EPSILON = 1e-6
+EPSILON = 0.01
 
 
 def _clamp(score: float) -> float:
