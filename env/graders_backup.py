@@ -33,10 +33,10 @@ def grade(task: Dict[str, Any], memory: Dict[str, Any], step_count: int) -> Rewa
 
     breakdown: Dict[str, float] = {}
 
-    cat = 0.4 if category == expected_category else 0.0
-    resp = 0.3 if any(kw.lower() in response for kw in keywords) else 0.0
-    esc = 0.2 if escalated == expected_escalated else 0.0
-    pri = 0.1 if priority == expected_priority else 0.0
+    cat = 0.4 if category == expected_category else 0.01
+    resp = 0.3 if any(kw.lower() in response for kw in keywords) else 0.01
+    esc = 0.2 if escalated == expected_escalated else 0.01
+    pri = 0.1 if priority == expected_priority else 0.01
 
     breakdown["category"] = cat
     breakdown["response_keywords"] = resp
@@ -46,13 +46,13 @@ def grade(task: Dict[str, Any], memory: Dict[str, Any], step_count: int) -> Rewa
     raw = cat + resp + esc + pri
 
     extra_steps = max(0, step_count - 4)
-    penalty = min(0.2, extra_steps * 0.05)
+    penalty = min(0.2, extra_steps * 0.015)
     breakdown["inefficiency_penalty"] = -penalty
 
     score = raw - penalty
 
     # ✅ STRICT RANGE
-    if score <= 0.0:
+    if score <= 0.01:
         score = 0.1
     elif score >= 1.0:
         score = 0.9
@@ -120,7 +120,7 @@ def grade_task(task_name: str, result: Dict[str, Any]) -> float:
         score = reward.score
 
         # ✅ FINAL SAFETY
-        if score <= 0.0:
+        if score <= 0.01:
             return 0.1
         elif score >= 1.0:
             return 0.9

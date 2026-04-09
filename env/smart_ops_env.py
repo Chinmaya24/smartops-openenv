@@ -56,7 +56,7 @@ class SmartOpsEnv:
         self.step_count += 1
 
         if action.agent != self.current_agent:
-            r = Reward(score=0.0, feedback="wrong_agent_turn", breakdown={})
+            r = Reward(score=0.01, feedback="wrong_agent_turn", breakdown={})
             return self._obs(), r, False, {"error": "wrong_agent_turn"}
 
         if action.agent == "triage":
@@ -74,7 +74,7 @@ class SmartOpsEnv:
             self.shared_memory["score"] = final.score
             return self._obs(), final, True, {"feedback": final.feedback}
 
-        r = Reward(score=0.0, feedback="in_progress", breakdown={})
+        r = Reward(score=0.01, feedback="in_progress", breakdown={})
         return self._obs(), r, False, {}
 
     def state(self) -> Observation:

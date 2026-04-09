@@ -24,7 +24,7 @@ class EmailRequest(BaseModel):
 class RuntimeEnv:
     def __init__(self) -> None:
         self.observation = ""
-        self.reward = 0.0
+        self.reward = 0.01
         self.done = False
         self.step_count = 0
         self.shared_memory: Dict[str, Any] = {}
@@ -33,7 +33,7 @@ class RuntimeEnv:
 
     def reset(self) -> Dict[str, Any]:
         self.observation = "ready"
-        self.reward = 0.01
+        self.reward = 0.011
         self.done = False
         self.step_count = 0
         self.shared_memory = {}
@@ -72,7 +72,7 @@ class RuntimeEnv:
             self.observation = "complete"
             self.done = True
         else:
-            self.reward = 0.0
+            self.reward = 0.01
             self.observation = "invalid_action"
             self.done = False
 
