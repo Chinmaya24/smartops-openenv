@@ -33,14 +33,14 @@ class RuntimeEnv:
 
     def reset(self) -> Dict[str, Any]:
         self.observation = "ready"
-        self.reward = 0.0
+        self.reward = 0.01
         self.done = False
         self.step_count = 0
         self.shared_memory = {}
         self.email = {}
         return {
             "observation": self.observation,
-            "reward": float(self.reward),
+            "reward": 0.01,
             "done": bool(self.done),
         }
 
@@ -109,7 +109,7 @@ class RuntimeEnv:
     def state(self) -> Dict[str, Any]:
         return {
             "observation": self.observation,
-            "reward": float(self.reward),
+            "reward": float(max(0.01, min(0.99, self.reward))),
             "done": bool(self.done),
             "step_count": int(self.step_count),
             "shared_memory": self.shared_memory,
