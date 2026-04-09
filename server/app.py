@@ -133,7 +133,7 @@ def metadata() -> Dict[str, Any]:
     return {
         "name": "smartops-openenv",
         "description": "SmartOps: AI-powered customer support triage environment with email classification, urgency detection, and action recommendation.",
-        "version": "0.1.0",
+        "version": "0.1.1",
     }
 
 
