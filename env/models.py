@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import math
 from typing import Any, Dict, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+_SCORE_EPSILON = 1e-3
 
 
 class Observation(BaseModel):
@@ -36,6 +39,31 @@ class Reward(BaseModel):
 
     model_config = {"extra": "forbid"}
 
-    score: float = Field(ge=0.0, le=1.0, description="Total score in [0, 1].")
+    score: float = Field(description="Total score strictly in (0, 1).")
     feedback: str = ""
     breakdown: Dict[str, float] = Field(default_factory=dict, description="Per-component contributions.")
+
+    @staticmethod
+    def _strict_score(value: Any) -> float:
+        """Normalize scores so they are always finite and strictly inside (0, 1)."""
+        try:
+            score = float(value)
+        except (TypeError, ValueError):
+            return 0.5
+
+        if not math.isfinite(score):
+            return 0.5
+
+        return max(_SCORE_EPSILON, min(1.0 - _SCORE_EPSILON, score))
+
+    @field_validator("score", mode="before")
+    @classmethod
+    def validate_score(cls, value: Any) -> float:
+        return cls._strict_score(value)
+
+    @field_validator("breakdown", mode="before")
+    @classmethod
+    def validate_breakdown(cls, value: Any) -> Dict[str, float]:
+        if not isinstance(value, dict):
+            return {}
+        return {str(k): cls._strict_score(v) for k, v in value.items()}
