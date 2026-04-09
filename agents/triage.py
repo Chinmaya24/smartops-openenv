@@ -21,9 +21,10 @@ def triage_agent(email: Dict[str, Any]) -> Dict[str, Any]:
             "production",
             "completely down",
             "platform is down",
+            "unavailable",
         )
     ):
-        return {"category": "technical", "urgency": 5}
+        return {"category": "technical", "urgency": 4}  # ✅ fixed: was 5
 
     if any(k in text for k in ("refund", "charged", "billing", "payment", "overcharge", "double")):
         return {"category": "billing", "urgency": 2}
