@@ -67,7 +67,7 @@ class RuntimeEnv:
             self.reward = 0.2
             self.done = False
         elif act in {"finalize", "manager"}:
-            self.reward = max(0.01, min(0.99, 1.0 - max(0, self.step_count - 4) * 0.05))
+            self.reward = 0.85
             self.shared_memory["score"] = self.reward
             self.observation = "complete"
             self.done = True
