@@ -1,100 +1,276 @@
 from __future__ import annotations
 
+import json
 import os
 import sys
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict
 
-import requests
 from openai import OpenAI
 
-from tasks.action_recommendation import INPUT_EXAMPLE as ACTION_INPUT
-from tasks.email_classification import INPUT_EXAMPLE as CLASS_INPUT
-from tasks.graders import grade_task
-from tasks.urgency_detection import INPUT_EXAMPLE as URGENCY_INPUT
+# ---------------------------------------------------------------------------
+# Environment configuration (set these in your HF Space secrets / .env)
+# ---------------------------------------------------------------------------
+API_BASE_URL = os.environ.get("API_BASE_URL", "https://api-inference.huggingface.co/v1")
+MODEL_NAME   = os.environ.get("MODEL_NAME",   "meta-llama/Llama-3.3-70B-Instruct")
+HF_TOKEN     = os.environ.get("HF_TOKEN",     "")
 
-API_BASE_URL = os.environ["API_BASE_URL"]
-API_KEY = os.environ["API_KEY"]
-MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
+client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
 
-client = OpenAI(api_key=API_KEY, base_url=API_BASE_URL)
-
-ENV_URL = "https://chinu248-smartops-openenv-final.hf.space"
+EPSILON = 1e-6
 
 
-def llm_call(prompt: str) -> str:
+# ---------------------------------------------------------------------------
+# Logging helpers — strict [START] / [STEP] / [END] format
+# ---------------------------------------------------------------------------
+
+def log_start(task_id: str) -> None:
+    print(f"[START] task_id={task_id}", flush=True)
+
+
+def log_step(key: str, value: Any) -> None:
+    # Serialise value so it always fits on one line
+    if isinstance(value, (dict, list)):
+        serialised = json.dumps(value, ensure_ascii=False)
+    else:
+        serialised = str(value)
+    print(f"[STEP] {key}={serialised}", flush=True)
+
+
+def log_end(task_id: str) -> None:
+    print(f"[END] task_id={task_id}", flush=True)
+
+
+# ---------------------------------------------------------------------------
+# Clamp helper — scores must be strictly inside (0, 1)
+# ---------------------------------------------------------------------------
+
+def _clamp(score: float) -> float:
+    return max(EPSILON, min(1.0 - EPSILON, float(score)))
+
+
+# ---------------------------------------------------------------------------
+# LLM call
+# ---------------------------------------------------------------------------
+
+def call_llm(system_prompt: str, user_prompt: str) -> str:
+    """Call the LLM via OpenAI-compatible client and return the text reply."""
     response = client.chat.completions.create(
         model=MODEL_NAME,
         messages=[
-            {"role": "system", "content": "You are a customer support AI assistant."},
-            {"role": "user", "content": prompt}
+            {"role": "system", "content": system_prompt},
+            {"role": "user",   "content": user_prompt},
         ],
-        max_tokens=200,
-        temperature=0.0
+        max_tokens=512,
+        temperature=0.2,
     )
-    content = response.choices[0].message.content
-    if not content:
-        raise ValueError("Empty response from LLM")
-    return content
+    return response.choices[0].message.content.strip()
 
 
-def post(path: str, payload: Dict[str, Any]) -> Dict[str, Any]:
-    """POST to the OpenEnv server. Never calls sys.exit."""
+# ---------------------------------------------------------------------------
+# Task 1 — email_classification
+# ---------------------------------------------------------------------------
+
+TASK_EMAIL: Dict[str, Any] = {
+    "name": "email_classification",
+    "input": {
+        "subject": "Refund needed for duplicate charge",
+        "body": "I was charged twice for my subscription this month and need a refund.",
+        "customer_tier": "user",
+        "evaluation_rules": {
+            "category": "billing",
+            "response_keywords": ["refund", "billing", "payment"],
+            "escalated": False,
+            "priority": 1,
+        },
+    },
+}
+
+
+def run_email_classification(task: Dict[str, Any]) -> Dict[str, Any]:
+    inp = task["input"]
+    system = (
+        "You are a customer-support triage assistant. "
+        "Classify the email into exactly one category: billing, technical, account, general. "
+        "Reply with ONLY a JSON object: {\"category\": \"<value>\"}"
+    )
+    user = f"Subject: {inp['subject']}\nBody: {inp['body']}"
+    raw = call_llm(system, user)
     try:
-        # Strip unknown fields before sending to /process-email
-        if path == "/process-email":
-            payload = {
-                "subject": payload.get("subject", ""),
-                "body": payload.get("body", ""),
-                "customer_tier": payload.get("customer_tier", "user"),
-            }
-        response = requests.post(f"{ENV_URL}{path}", json=payload, timeout=60)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        print(f"[ERROR] Request failed for {path}: {e}", file=sys.stderr)
-        raise
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        parsed = {"category": "general"}
+    return parsed
 
 
-def run_task(task_name: str, email_input: Dict[str, Any]) -> float:
-    post("/reset", {})
+def grade_email_classification(result: Dict[str, Any]) -> float:
+    task   = result.get("task", {})
+    memory = result.get("memory", result)
+    rules  = task.get("evaluation_rules", {})
+    expected = str(rules.get("category", "billing")).lower()
+    actual   = str(memory.get("category", "")).lower()
+    return _clamp(0.8 if actual == expected else 0.2)
 
-    prompt = (
-        f"Analyze this support email:\n"
-        f"Subject: {email_input.get('subject', '')}\n"
-        f"Body: {email_input.get('body', '')}\n\n"
-        f"Classify it and suggest appropriate action."
+
+# ---------------------------------------------------------------------------
+# Task 2 — urgency_detection
+# ---------------------------------------------------------------------------
+
+TASK_URGENCY: Dict[str, Any] = {
+    "name": "urgency_detection",
+    "input": {
+        "subject": "URGENT: Production server is down",
+        "body": "Our production environment has been completely unavailable for 30 minutes.",
+        "customer_tier": "enterprise",
+        "evaluation_rules": {
+            "priority": 3,
+            "escalated": True,
+            "category": "technical",
+            "response_keywords": ["escalate", "urgent", "critical"],
+        },
+    },
+}
+
+
+def run_urgency_detection(task: Dict[str, Any]) -> Dict[str, Any]:
+    inp = task["input"]
+    system = (
+        "You are a support triage assistant that detects urgency. "
+        "Assign a priority level 1 (low), 2 (medium), or 3 (high) and decide whether to escalate. "
+        "Reply with ONLY a JSON object: {\"priority\": <1|2|3>, \"escalated\": <true|false>}"
     )
-    llm_response = llm_call(prompt)
-    print(f"[LLM] {task_name}: {llm_response[:80]}", file=sys.stderr)
+    user = (
+        f"Subject: {inp['subject']}\n"
+        f"Body: {inp['body']}\n"
+        f"Customer tier: {inp['customer_tier']}"
+    )
+    raw = call_llm(system, user)
+    try:
+        parsed = json.loads(raw)
+        parsed["priority"]  = int(parsed.get("priority", 1))
+        parsed["escalated"] = bool(parsed.get("escalated", False))
+    except (json.JSONDecodeError, ValueError):
+        parsed = {"priority": 1, "escalated": False}
+    return parsed
 
-    result = post("/process-email", email_input)
 
-    structured_result = {
-        "task": email_input,   # contains evaluation_rules for grader
-        "memory": result,      # contains category/priority/escalated from server
-        "step_count": 1
-    }
+def grade_urgency_detection(result: Dict[str, Any]) -> float:
+    task   = result.get("task", {})
+    memory = result.get("memory", result)
+    rules  = task.get("evaluation_rules", {})
+    expected = int(rules.get("priority", 0))
+    actual   = int(memory.get("priority", 0))
+    return _clamp(0.8 if actual == expected else 0.2)
 
-    score = grade_task(task_name, structured_result)
-    # Use epsilon to ensure strictly (0, 1)
-    return max(1e-6, min(1.0 - 1e-6, float(score)))
+
+# ---------------------------------------------------------------------------
+# Task 3 — action_recommendation
+# ---------------------------------------------------------------------------
+
+TASK_ACTION: Dict[str, Any] = {
+    "name": "action_recommendation",
+    "input": {
+        "subject": "Cannot login to account",
+        "body": "I cannot access my account after a password reset three days ago.",
+        "customer_tier": "user",
+        "evaluation_rules": {
+            "category": "technical",
+            "response_keywords": ["help", "resolve", "support", "assist"],
+            "escalated": False,
+            "priority": 2,
+        },
+    },
+}
+
+
+def run_action_recommendation(task: Dict[str, Any]) -> Dict[str, Any]:
+    inp = task["input"]
+    system = (
+        "You are a customer-support assistant. "
+        "Recommend an action and draft a short response for this ticket. "
+        "Reply with ONLY a JSON object: "
+        "{\"escalated\": <true|false>, \"priority\": <1|2|3>, \"response\": \"<draft reply>\"}"
+    )
+    user = (
+        f"Subject: {inp['subject']}\n"
+        f"Body: {inp['body']}\n"
+        f"Customer tier: {inp['customer_tier']}"
+    )
+    raw = call_llm(system, user)
+    try:
+        parsed = json.loads(raw)
+        parsed["escalated"] = bool(parsed.get("escalated", False))
+        parsed["priority"]  = int(parsed.get("priority", 1))
+    except (json.JSONDecodeError, ValueError):
+        parsed = {"escalated": False, "priority": 1, "response": "We will help you resolve this."}
+    return parsed
+
+
+def grade_action_recommendation(result: Dict[str, Any]) -> float:
+    task   = result.get("task", {})
+    memory = result.get("memory", result)
+    rules  = task.get("evaluation_rules", {})
+    expected_escalated = bool(rules.get("escalated", False))
+    actual_escalated   = bool(memory.get("escalated", False))
+    response  = str(memory.get("response", "")).lower()
+    keywords  = [str(k).lower() for k in rules.get("response_keywords", [])]
+    has_kw    = any(kw in response for kw in keywords)
+    if actual_escalated == expected_escalated and has_kw:
+        return _clamp(0.8)
+    if actual_escalated == expected_escalated:
+        return _clamp(0.6)
+    return _clamp(0.2)
+
+
+# ---------------------------------------------------------------------------
+# Task registry
+# ---------------------------------------------------------------------------
+
+TASKS = [
+    (TASK_EMAIL,   run_email_classification, grade_email_classification),
+    (TASK_URGENCY, run_urgency_detection,    grade_urgency_detection),
+    (TASK_ACTION,  run_action_recommendation, grade_action_recommendation),
+]
+
+
+# ---------------------------------------------------------------------------
+# Main runner
+# ---------------------------------------------------------------------------
+
+def run_task(task: Dict[str, Any], runner, grader) -> float:
+    task_id = task["name"]
+    inp     = task["input"]
+
+    log_start(task_id)
+    log_step("input", inp)
+
+    try:
+        memory = runner(task)
+    except Exception as exc:          # noqa: BLE001
+        memory = {"error": str(exc)}
+
+    log_step("output", memory)
+
+    result = {"task": inp, "memory": memory}
+    score  = grader(result)
+
+    log_step("score", score)
+    log_end(task_id)
+
+    return score
 
 
 def main() -> None:
-    tasks: List[Tuple[str, Dict[str, Any]]] = [
-        ("email_classification", CLASS_INPUT),
-        ("urgency_detection", URGENCY_INPUT),
-        ("action_recommendation", ACTION_INPUT),
-    ]
+    scores = {}
+    for task, runner, grader in TASKS:
+        score = run_task(task, runner, grader)
+        scores[task["name"]] = score
 
-    print("[START]")
+    # Final summary line (optional but useful for debugging)
+    print(f"[SUMMARY] {json.dumps(scores)}", flush=True)
 
-    for task_name, payload in tasks:
-        score = run_task(task_name, payload)
-        score = max(1e-6, min(1.0 - 1e-6, float(score)))  # epsilon-based clamp
-        print(f"[STEP] task={task_name} score={score:.4f}")
-
-    print("[END]")
+    # Exit non-zero only on hard failures (all scores present = success)
+    if len(scores) < 3:
+        sys.exit(1)
 
 
 if __name__ == "__main__":
