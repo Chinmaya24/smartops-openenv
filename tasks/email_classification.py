@@ -22,7 +22,4 @@ EXPECTED_OUTPUT: Dict[str, Any] = {
 }
 
 
-def grade(result: Dict[str, Any]) -> float:
-    """Delegate to centralized grader in tasks/graders.py"""
-    from tasks.graders import grade_email_classification
-    return grade_email_classification(result)
+
